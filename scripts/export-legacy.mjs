@@ -2,7 +2,7 @@
  * 一次性迁移脚本：把旧 SQLite 博客导出成 content/ 下的 Markdown。
  *
  * 只导出已发布文章到 content/posts；草稿写到 content/drafts（已 gitignore），
- * 避免把求职/简历类草稿带进公开仓库。
+ * 避免把个人草稿带进公开仓库。
  *
  * 用法：node scripts/export-legacy.mjs
  */
