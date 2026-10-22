@@ -5,6 +5,7 @@ slug: "frontend-interview-questions"
 date: "2026-10-09T09:00:00+08:00"
 updated: "2026-10-09T09:00:00+08:00"
 summary: "一份前端面试题的知识点整理：块级元素与行内元素、三栏布局、各种居中、sticky footer、Vue 双向绑定与 v-model、keep-alive、nextTick、跨域、闭包、事件流、数组扁平化和数组转树。每道题附一份能直接说出口的答案和常见的追问方向。"
+cover: "/uploads/2026/10/20261009-frontend-interview-cover.webp"
 category: "tech"
 tags: ["前端","CSS","Vue","JavaScript","面试"]
 isTop: false
