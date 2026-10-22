@@ -1,24 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView } from 'vue-router'
 import BackdropLayer from '@/components/BackdropLayer.vue'
 import FallingPetals from '@/components/FallingPetals.vue'
 import PageLoader from '@/components/PageLoader.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+import AppearancePanel from '@/components/AppearancePanel.vue'
+import { useAppearance } from '@/composables/useAppearance'
 
-const route = useRoute()
-
-// 长文阅读页压暗背景，其余页面让插画透出来
-const backdropIntensity = computed<'soft' | 'strong'>(() =>
-  route.name === 'post' ? 'strong' : 'soft',
-)
+const { settings } = useAppearance()
 </script>
 
 <template>
   <div class="relative min-h-screen">
-    <BackdropLayer :intensity="backdropIntensity" />
-    <FallingPetals />
+    <BackdropLayer />
+    <FallingPetals :enabled="settings.showParticles" />
 
     <div class="relative z-10 flex min-h-screen flex-col">
       <SiteHeader />
@@ -33,6 +29,7 @@ const backdropIntensity = computed<'soft' | 'strong'>(() =>
     </div>
 
     <PageLoader />
+    <AppearancePanel />
   </div>
 </template>
 

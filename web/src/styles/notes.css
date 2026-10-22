@@ -1,0 +1,49 @@
+.notes-stream > [data-testid=note-item] {
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+}
+.notes-stream > .note-expanded {
+  max-width: 100%;
+  scroll-margin-top: 80px;
+}
+.notes-stream > [data-testid=note-item] { scroll-margin-top: 80px; }
+.note-compact .note-copy {
+  max-height: 11.1em;
+  overflow: hidden;
+}
+.note-compact .note-copy-overflow {
+  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+.note-compact .note-gallery {
+  grid-template-columns: repeat(var(--note-image-columns), minmax(0, 1fr));
+  max-width: calc(var(--note-image-columns) * 168px + (var(--note-image-columns) - 1) * 8px);
+  max-height: 168px;
+  overflow: hidden;
+}
+.note-compact .note-gallery > a {
+  aspect-ratio: 1;
+}
+.note-compact .note-gallery > a:nth-child(n+4) { display: none; }
+.note-compact .note-gallery img {
+  width: 100%; height: 100%; max-height: none;
+  aspect-ratio: 1;
+  object-fit: cover; object-position: center 30%;
+}
+.note-expansion {
+  display: flex;
+  align-items: center; justify-content: center; gap: 9px;
+  width: 100%; min-height: 44px;
+  margin-top: 12px; padding-top: 9px;
+  border-top: 1px solid rgb(var(--c-mist-400) / .18);
+  color: rgb(var(--c-sakura-200));
+  font: 12px/1.6 Outfit, 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  cursor: pointer;
+}
+.note-expansion[hidden] { display: none !important; }
+.note-expansion:hover { color: rgb(var(--c-sakura-300)); }
+.note-expansion:focus-visible { outline: 2px solid rgb(var(--c-sakura-300)); outline-offset: 3px; border-radius: 6px; }
+.note-expansion svg { width: 15px; height: 15px; flex-shrink: 0; transition: transform .2s ease; }
+.note-expansion[aria-expanded=true] svg { transform: rotate(180deg); }
+.note-image-count { color: rgb(var(--c-mist-500)); font-size: 10px; }
+@media(prefers-reduced-motion:reduce) { .note-expansion svg { transition: none; } }

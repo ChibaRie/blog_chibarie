@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+
+const props = withDefaults(defineProps<{ enabled?: boolean }>(), { enabled: true })
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
@@ -63,6 +65,7 @@ let height = 0
 let lastTime = 0
 let active = true
 let reduced = false
+const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 
 function makeParticle(initial: boolean): Particle {
   const kind: Particle['kind'] = Math.random() < 0.82 ? 'petal' : 'spark'
@@ -168,28 +171,32 @@ function frame(time: number) {
   rafId = requestAnimationFrame(frame)
 }
 
-function handleVisibility() {
-  if (document.hidden) {
-    active = false
-    cancelAnimationFrame(rafId)
-  } else if (!reduced) {
-    active = true
-    lastTime = performance.now()
-    rafId = requestAnimationFrame(frame)
+function syncAnimation() {
+  cancelAnimationFrame(rafId)
+  active = props.enabled && !reduced && !document.hidden
+  if (!active) {
+    ctx?.clearRect(0, 0, width, height)
+    return
   }
-}
-
-onMounted(() => {
-  reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (reduced) return
-
-  resize()
-  active = true
   lastTime = performance.now()
   rafId = requestAnimationFrame(frame)
+}
+
+function handleMotionChange() {
+  reduced = motionQuery.matches
+  syncAnimation()
+}
+
+watch(() => props.enabled, syncAnimation)
+
+onMounted(() => {
+  reduced = motionQuery.matches
+  resize()
+  syncAnimation()
 
   window.addEventListener('resize', resize)
-  document.addEventListener('visibilitychange', handleVisibility)
+  document.addEventListener('visibilitychange', syncAnimation)
+  motionQuery.addEventListener('change', handleMotionChange)
   // 主题切换后清空存量粒子，让它们按新配色重新生成
   themeObserver.observe(document.documentElement, {
     attributes: true,
@@ -201,7 +208,8 @@ onUnmounted(() => {
   active = false
   cancelAnimationFrame(rafId)
   window.removeEventListener('resize', resize)
-  document.removeEventListener('visibilitychange', handleVisibility)
+  document.removeEventListener('visibilitychange', syncAnimation)
+  motionQuery.removeEventListener('change', handleMotionChange)
   themeObserver.disconnect()
 })
 </script>
