@@ -5,7 +5,7 @@ slug: "python-asyncio-fastapi-notes"
 date: "2026-10-22T17:06:00+08:00"
 updated: "2026-10-22T17:06:00+08:00"
 summary: "把 Python 基础、asyncio 和 FastAPI 的常见面试题整理成一条线：先搞清楚对象模型，再理解异步在调度什么，最后落到 FastAPI 的请求生命周期和工程实践。"
-cover: "/uploads/2026/10/20261022-python-cover.webp"
+cover: "/uploads/2026/10/20261022-python-cover.gif"
 category: "tech"
 tags: ["Python","FastAPI","asyncio","面试","后端"]
 isTop: false
