@@ -33,9 +33,8 @@ deploy/
 admin/
 server/
 
-# 图片与含个人经历的文章只存本地，不进公开仓库
-web/public/uploads/
-content/posts/markdown-styling-reference-23.md
+# 未引用的图片，只留本地
+web/public/uploads/2026/09/1789789176-c3a0da8264b185e7.jpg
 
 # 备份与本地临时库
 *.bak
