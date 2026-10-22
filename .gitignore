@@ -28,7 +28,6 @@ Thumbs.db
 
 # 本地状态 / 私有记忆 / 旧后端产物
 .workbuddy/
-CODEBUDDY.md
 AGENTS.md
 deploy/
 web/.workbuddy/
