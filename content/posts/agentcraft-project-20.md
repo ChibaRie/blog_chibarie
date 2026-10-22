@@ -15,11 +15,6 @@ AgentCraft 是我在实习里做的项目，也是公司课程教材的主线示
 
 所以这个平台把专家的人设、方法论、Skill 能力包和 MCP 工具打包成一个可以发布的“专家”。用户召唤专家、创建任务，任务跑在独立的 Docker 沙箱里，模型请求则通过按任务令牌路由的薄代理转发到用户自己的 Provider。简单说，它同时做了三件事：专家和能力的发布、每任务隔离的 Agent 运行时，以及多租户下的权限和配额治理。
 
-![AgentCraft 首页](/uploads/imports/assets/agentcraft-screenshots/01-home.png)
-![任务对话进行中](/uploads/imports/assets/agentcraft-screenshots/02-task-chat.png)
-![编辑专家](/uploads/imports/assets/agentcraft-screenshots/03-expert-edit.png)
-![Skill 管理](/uploads/imports/assets/agentcraft-screenshots/04-skill-manage.png)
-![MCP 服务管理](/uploads/imports/assets/agentcraft-screenshots/05-mcp-manage.png)
 
 ## 它长什么样
 
