@@ -41,7 +41,7 @@ const decorated = computed(() =>
         友链
       </h1>
       <p class="mt-4 max-w-2xl text-sm leading-relaxed text-mist-400 sm:text-base">
-        常逛的博客和朋友的站点。想交换友链的话，先在本站加上我，再去
+        常逛的博客和朋友的站点。想交换友链的话，在
         <a
           href="https://github.com/ChibaRie/blog_chibarie/issues"
           target="_blank"
@@ -50,7 +50,7 @@ const decorated = computed(() =>
         >
           GitHub Issues
         </a>
-        留下你的站名、地址和介绍就行。
+        留下你的站名、地址和介绍就行。我会填上去的。
       </p>
     </header>
 
@@ -135,7 +135,7 @@ const decorated = computed(() =>
         >
           GitHub Issues
         </a>
-        留个言吧。
+        留下站名、地址和介绍就行，我会填上去的。
       </p>
     </div>
 
