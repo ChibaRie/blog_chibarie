@@ -6,7 +6,7 @@ date: "2026-09-10T11:24:16+08:00"
 updated: "2026-10-22T16:42:00+08:00"
 summary: "最近在看 ccswitch 的熔断实现，回头把降级、熔断、限流和 Fallback 的资料重新过了一遍。这篇按自己的理解整理了核心概念、熔断器状态机，以及 Sentinel / Hystrix / Resilience4j 的选型。"
 cover: "/uploads/2026/09/1789799055-51803a236c8c15a7.gif"
-category: "dev"
+category: "tech"
 tags: ["architecture","circuit-breaker","fallback","sentinel","resilience4j"]
 isTop: false
 draft: false

@@ -6,7 +6,7 @@ date: "2026-08-31T11:24:00+08:00"
 updated: "2026-10-22T16:20:00+08:00"
 summary: "AgentCraft 是我在实习里做的 AI Agent 平台：把专家人设、方法论、Skill 和 MCP 工具打包成可发布的专家，任务跑在独立 Docker 沙箱里。这篇记录它的架构、V1 到 V2 的重建，以及现在做到哪。"
 cover: "/uploads/2026/09/1789801485-adee450b094da112.jpg"
-category: "dev"
+category: "projects"
 tags: ["agentcraft","ai-agent","pi-agent","fastapi","postgresql","mcp","skills","docker"]
 isTop: false
 draft: false

@@ -6,7 +6,7 @@ date: "2026-07-23T11:24:05+08:00"
 updated: "2026-10-22T16:24:00+08:00"
 summary: "用 AI 写代码，小脚本怎么聊都行，项目一大就容易越改越乱。这篇聊聊 Vibe Coding 的问题，以及我现在更常用的 Spec Coding：先把需求、方案和任务写清楚，再让模型动手。"
 cover: "/uploads/2026/09/1789799780-b1636b6bc68a3bce.jpg"
-category: "dev"
+category: "tech"
 tags: ["vibe-coding","spec-driven-development","ai-agent","software-engineering","spec-kit"]
 isTop: false
 draft: false
