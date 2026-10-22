@@ -1,0 +1,631 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================== 主题色板 =====================
+ * 色值一律写成 "R G B" 三段（空格分隔，不带 rgb() 包裹），
+ * Tailwind 侧用 rgb(var(--c-x) / <alpha-value>) 引用，故 /26 之类的透明度写法照常可用。
+ * 暗色写在 :root（默认），亮色写在 html.light 里覆盖同名变量。
+ * 语义约定：night = 底色、mist = 文字、sakura / cosmos = 强调色。
+ * 亮色下 night 与 mist 的明暗方向整体反转（底色变浅、文字变深）。
+ * ================================================== */
+:root {
+  --c-night-950: 8 6 15;
+  --c-night-900: 13 10 26;
+  --c-night-800: 20 17 41;
+  --c-night-700: 29 24 56;
+  --c-night-600: 39 33 70;
+  --c-night-500: 51 44 88;
+
+  --c-sakura-200: 240 196 222;
+  --c-sakura-300: 232 168 204;
+  --c-sakura-400: 217 140 184;
+  --c-sakura-500: 196 122 164;
+  --c-sakura-600: 182 108 150;
+  --c-sakura-700: 150 87 124;
+
+  --c-cosmos-200: 195 198 236;
+  --c-cosmos-300: 169 173 222;
+  --c-cosmos-400: 139 143 212;
+  --c-cosmos-500: 96 99 162;
+  --c-cosmos-600: 82 72 129;
+  --c-cosmos-700: 61 54 99;
+
+  --c-mist-100: 246 226 236;
+  --c-mist-200: 228 214 234;
+  --c-mist-300: 209 198 218;
+  --c-mist-400: 181 153 187;
+  --c-mist-500: 141 127 156;
+  --c-mist-600: 132 120 150;
+
+  --shadow-soft: 0 8px 32px rgb(8 6 15 / 0.45);
+  --shadow-glow: 0 0 24px rgb(217 140 184 / 0.22);
+  --shadow-glow-lg: 0 0 48px rgb(217 140 184 / 0.28);
+
+  /* 代码高亮（暗色：浅色字压在深色底上） */
+  --hl-base: #e4d6ea;
+  --hl-comment: #6d617e;
+  --hl-keyword: #e8a8cc;
+  --hl-string: #a9adde;
+  --hl-number: #8b8fd4;
+  --hl-title: #f0c4de;
+  --hl-attr: #c3c6ec;
+  --hl-type: #d1c6da;
+  --hl-meta: #8d7f9c;
+  --hl-deletion: #e0736f;
+
+  /* 飘落粒子（canvas 用，由 FallingPetals 读取） */
+  --petal-1: 240 196 222;
+  --petal-2: 232 168 204;
+  --petal-3: 217 140 184;
+  --petal-4: 246 217 232;
+  --petal-5: 205 180 232;
+  --petal-spark: 255 255 255;
+}
+
+html.light {
+  /* 底色：近白页面 + 纯白卡片 */
+  --c-night-950: 246 243 249;
+  --c-night-900: 240 235 245;
+  --c-night-800: 255 255 255;
+  --c-night-700: 234 227 241;
+  --c-night-600: 222 213 232;
+  --c-night-500: 205 194 218;
+
+  /* 强调色：白底上需要压深才能保住对比度 */
+  --c-sakura-200: 156 63 111;
+  --c-sakura-300: 173 74 128;
+  --c-sakura-400: 196 101 155;
+  --c-sakura-500: 171 68 128;
+  --c-sakura-600: 150 56 110;
+  --c-sakura-700: 127 47 94;
+
+  --c-cosmos-200: 74 74 148;
+  --c-cosmos-300: 90 90 168;
+  --c-cosmos-400: 112 112 192;
+  --c-cosmos-500: 132 132 208;
+  --c-cosmos-600: 160 160 221;
+  --c-cosmos-700: 200 200 234;
+
+  /* 文字：反转明暗方向 */
+  --c-mist-100: 36 29 45;
+  --c-mist-200: 50 42 61;
+  --c-mist-300: 69 59 82;
+  --c-mist-400: 92 80 104;
+  --c-mist-500: 109 96 121;
+  --c-mist-600: 115 102 127;
+
+  --shadow-soft: 0 8px 28px rgb(76 60 90 / 0.13);
+  --shadow-glow: 0 0 22px rgb(196 101 155 / 0.18);
+  --shadow-glow-lg: 0 0 44px rgb(196 101 155 / 0.22);
+
+  /* 代码高亮（亮色：深色字压在浅色底上） */
+  --hl-base: #3b3446;
+  --hl-comment: #8d8199;
+  --hl-keyword: #a03c74;
+  --hl-string: #4f4fa0;
+  --hl-number: #7a3fa8;
+  --hl-title: #8e3d8e;
+  --hl-attr: #3f4f96;
+  --hl-type: #4a4257;
+  --hl-meta: #7d7089;
+  --hl-deletion: #b93a35;
+
+  /* 亮底上要用更浓的花瓣色，否则浅粉几乎看不见 */
+  --petal-1: 226 140 183;
+  --petal-2: 214 110 168;
+  --petal-3: 198 89 149;
+  --petal-4: 232 166 199;
+  --petal-5: 158 132 214;
+  --petal-spark: 122 112 168;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 让原生控件（滚动条、表单、日期选择器等）跟随主题明暗 */
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
+  /* 主题切换时给底色与文字一个短过渡，避免整页硬跳 */
+  html,
+  body {
+    transition:
+      background-color 0.32s ease,
+      color 0.32s ease;
+  }
+
+  body {
+    @apply bg-night-950 text-mist-100 font-sans;
+    min-height: 100vh;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-sakura-400/35 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-night-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-cosmos-700 rounded-full;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-sakura-600;
+    background-clip: content-box;
+  }
+}
+
+/* ===== 无障碍与交互基线 ===== */
+
+/* button 元素默认是箭头光标，所有可点击元素统一给手型 */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+label[for],
+summary {
+  cursor: pointer;
+}
+
+/* 键盘焦点环：仅键盘导航时出现，不影响鼠标用户 */
+:focus-visible {
+  outline: 2px solid rgb(var(--c-sakura-400) / 0.72);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* 移动端保证触摸目标不小于 44px */
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-ghost,
+  .nav-link {
+    min-height: 44px;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-night-800/55 backdrop-blur-card border border-mist-400/10;
+  }
+
+  .glass-card {
+    @apply glass rounded-xl transition-all duration-300;
+  }
+
+  .glass-card-hover {
+    @apply hover:border-sakura-400/30 hover:bg-night-800/70 hover:shadow-glow;
+  }
+
+  /* 上浮用原生 CSS 写：Tailwind 的 translate 变体在 @apply 里展开不可靠 */
+  .glass-card-hover:hover {
+    transform: translateY(-2px);
+  }
+
+  .tag-pill {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs
+      bg-cosmos-600/25 text-cosmos-200 border border-cosmos-400/20
+      transition-colors duration-200;
+  }
+
+  .tag-pill-hover {
+    @apply hover:bg-sakura-500/25 hover:text-sakura-200 hover:border-sakura-400/35;
+  }
+
+  .meta-chip {
+    @apply inline-flex items-center gap-1 text-xs text-mist-400;
+  }
+
+  .divider-glow {
+    @apply h-px w-full border-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--c-sakura-400) / 0.34),
+      transparent
+    );
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm
+      bg-sakura-500/85 text-night-950 font-medium
+      transition-all duration-200 hover:bg-sakura-400 hover:shadow-glow;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm
+      text-mist-300 border border-mist-400/18
+      transition-all duration-200 hover:text-sakura-200 hover:border-sakura-400/40;
+  }
+
+  .nav-link {
+    @apply relative px-3 py-1.5 text-sm text-mist-300 rounded-lg
+      transition-colors duration-200 hover:text-sakura-200;
+  }
+
+  .nav-link-active {
+    @apply text-sakura-200 bg-sakura-500/12;
+  }
+
+  .social-link {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-full
+      text-mist-500 transition-all duration-200
+      hover:bg-sakura-500/12 hover:text-sakura-200;
+  }
+
+  .field {
+    @apply w-full px-3 py-2 rounded-lg text-sm
+      bg-night-900/70 border border-mist-400/15 text-mist-100
+      placeholder:text-mist-600
+      focus:outline-none focus:border-sakura-400/45 focus:ring-1 focus:ring-sakura-400/25
+      transition-colors duration-200;
+  }
+
+  .section-label {
+    @apply flex items-center gap-2 text-[14px] font-medium text-mist-300;
+  }
+
+  .section-label::before {
+    content: '';
+    @apply block w-1 h-3 rounded-full bg-sakura-400/70;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 18px rgb(var(--c-sakura-400) / 0.45);
+  }
+  /* 亮色下深色文字配粉色光晕会糊成一团，改用白色光晕——
+     既保留柔光感，又能在深浅任意的头图上把文字托出来 */
+  html.light .text-glow {
+    text-shadow:
+      0 1px 16px rgb(255 255 255 / 0.92),
+      0 0 32px rgb(255 255 255 / 0.6);
+  }
+  .mask-fade-bottom {
+    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  }
+}
+
+/* ===================== 主题切换的渐变揭示动画 =====================
+ * View Transitions API：点击切换按钮时，新主题以点击位置为中心，
+ * 一圈圈向外扩散铺满屏幕；扩散边缘用径向渐变做柔和过渡，不是硬边圆。
+ * 不支持的浏览器（Firefox 老版本 / Safari 17 以下）自动跳过 ——
+ * useTheme.ts 里做了能力检测，回落到 html/body 的 0.32s 颜色过渡。
+ *
+ * 径向渐变的半径不能用百分比（circle 的百分比写法在 CSS 规范里不合法），
+ * 所以半径用 <length>，通过 @property 注册才能被 keyframes 插值。
+ * ================================================== */
+@property --theme-reveal-r {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  mask-image: radial-gradient(
+    circle at var(--theme-x, 50vw) var(--theme-y, 50vh),
+    rgb(0 0 0 / 1) calc(var(--theme-reveal-r) - 72px),
+    rgb(0 0 0 / 0) calc(var(--theme-reveal-r) + 72px)
+  );
+  animation: theme-reveal 0.62s ease-in-out forwards;
+}
+
+@keyframes theme-reveal {
+  from {
+    --theme-reveal-r: 0px;
+  }
+  to {
+    --theme-reveal-r: 260vmax;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+    mask-image: none !important;
+  }
+}
+
+/* ===================== 亮色主题的背景与卡片覆盖 =====================
+ * 这些类名只用于「背景铺层」，不参与组件语义，故单独挂类名而不是改 Tailwind 配置。
+ *
+ * 暗色下插画被压暗，浅色文字天然可读；亮色下「压暗」变成「压白」，
+ * 插画会直接透到正文后面形成干扰（文章页正文并没有包在卡片里）。
+ * 单纯加厚遮盖会把插画彻底压没，所以改为：把背景图重度模糊，
+ * 让它从「看得清的插画」退成「抽象色雾」——氛围还在，但不再和文字抢注意力。
+ * ================================================================= */
+html.light .backdrop-image {
+  filter: blur(20px) saturate(1.15);
+  transform: scale(1.12);
+}
+
+html.light .backdrop-veil {
+  background-color: rgb(var(--c-night-950) / 0.62);
+}
+html.light .backdrop-fade {
+  background-image: linear-gradient(
+    to bottom,
+    rgb(var(--c-night-950) / 0.46),
+    rgb(var(--c-night-950) / 0.66),
+    rgb(var(--c-night-950) / 0.92)
+  );
+}
+
+/* 首页头图是「展示位」，没有小字要读，插画应尽量保持鲜艳，只在下缘过渡到页面底色 */
+html.light .hero-veil {
+  background-color: rgb(var(--c-night-950) / 0.1);
+}
+html.light .hero-fade {
+  background-image: linear-gradient(
+    to bottom,
+    rgb(var(--c-night-950) / 0.05),
+    rgb(var(--c-night-950) / 0.24),
+    rgb(var(--c-night-950) / 0.97)
+  );
+}
+
+/* 亮色卡片：提高不透明度并补一道浅阴影，否则白卡叠在白底上没有层次 */
+html.light .glass {
+  background-color: rgb(var(--c-night-800) / 0.86);
+  border-color: rgb(var(--c-mist-400) / 0.2);
+}
+html.light .glass-card {
+  box-shadow: var(--shadow-soft);
+}
+html.light .glass-card-hover:hover {
+  background-color: rgb(var(--c-night-800) / 0.96);
+}
+
+/* 暗色的代码块靠「比页面更深」成立；亮色下页面本身就是浅色，
+   靠底色几乎拉不开差距，改为加深底色 + 明显一圈描边 */
+html.light .article-body pre {
+  background-color: rgb(var(--c-night-900) / 0.92);
+  border-color: rgb(var(--c-cosmos-400) / 0.38);
+}
+html.light .article-body code {
+  background-color: rgb(var(--c-cosmos-700) / 0.6);
+  border-color: rgb(var(--c-cosmos-400) / 0.28);
+}
+/* 亮色下 callout 的 8% 底色太淡，提到 10% 才看得出区块 */
+html.light .article-body .callout-quote {
+  background-color: rgb(var(--c-night-700) / 0.6);
+}
+
+/* ---------- 文章正文排版 ---------- */
+.article-body {
+  @apply text-[16px] leading-[1.85] text-mist-200;
+}
+.article-body > *:first-child {
+  margin-top: 0;
+}
+.article-body h2 {
+  @apply mt-10 mb-4 text-xl font-medium text-mist-100 scroll-mt-24;
+  position: relative;
+  padding-left: 14px;
+}
+.article-body h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.42em;
+  width: 4px;
+  height: 0.95em;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--c-sakura-400)),
+    rgb(var(--c-sakura-400) / 0.25)
+  );
+}
+.article-body h3 {
+  @apply mt-8 mb-3 text-lg font-medium text-mist-100 scroll-mt-24;
+}
+.article-body h4 {
+  @apply mt-6 mb-2 text-base font-medium text-mist-100;
+}
+.article-body p {
+  @apply my-4;
+}
+.article-body a {
+  @apply text-sakura-300 underline decoration-sakura-400/40 underline-offset-4
+    transition-colors hover:text-sakura-200 hover:decoration-sakura-300;
+}
+.article-body strong {
+  @apply text-mist-100 font-medium;
+}
+.article-body ul,
+.article-body ol {
+  @apply my-4 pl-5 space-y-2;
+}
+.article-body ul {
+  @apply list-disc marker:text-sakura-400/70;
+}
+.article-body ol {
+  @apply list-decimal marker:text-sakura-400/70;
+}
+.article-body blockquote {
+  @apply my-6 py-2 pl-4 pr-3 rounded-r-lg border-l-2 border-sakura-400/45
+    bg-sakura-500/8 text-mist-300 italic;
+}
+.article-body blockquote p {
+  @apply my-1;
+}
+/* ===== 提示块 callout ::: tip / info / warning / danger / quote ===== */
+.article-body .callout {
+  @apply my-5 rounded-xl border-l-[3px] px-5 py-4;
+}
+.article-body .callout .callout-title {
+  @apply mb-2 text-[14px] font-medium;
+}
+.article-body .callout p {
+  @apply my-0 text-[13.5px] leading-[1.8] text-mist-300;
+}
+.article-body .callout p + p {
+  @apply mt-2;
+}
+.article-body .callout ul,
+.article-body .callout ol {
+  @apply my-2 pl-5;
+}
+.article-body .callout-tip {
+  @apply border-sakura-400/70 bg-sakura-500/8;
+}
+.article-body .callout-tip .callout-title {
+  @apply text-sakura-200;
+}
+.article-body .callout-info {
+  @apply border-cosmos-400/70 bg-cosmos-500/10;
+}
+.article-body .callout-info .callout-title {
+  @apply text-cosmos-200;
+}
+.article-body .callout-warning {
+  @apply border-amber-400/70 bg-amber-500/8;
+}
+.article-body .callout-warning .callout-title {
+  @apply text-amber-200;
+}
+.article-body .callout-danger {
+  @apply border-rose-400/70 bg-rose-500/8;
+}
+.article-body .callout-danger .callout-title {
+  @apply text-rose-200;
+}
+.article-body .callout-quote {
+  @apply border-mist-400/40 bg-night-700/45;
+}
+.article-body .callout-quote .callout-title {
+  @apply text-mist-300;
+}
+.article-body code {
+  @apply px-1.5 py-0.5 rounded text-[0.86em] font-mono
+    bg-cosmos-700/45 text-sakura-200 border border-cosmos-400/15;
+}
+.article-body pre {
+  @apply my-5 p-4 rounded-xl overflow-x-auto text-[14px] leading-relaxed
+    bg-night-950/85 border border-cosmos-500/25;
+}
+.article-body pre code {
+  @apply p-0 bg-transparent border-0 text-mist-200 text-[14px];
+}
+.article-body img {
+  @apply my-6 rounded-xl border border-mist-400/10 max-w-full h-auto;
+}
+.article-body hr {
+  @apply my-8;
+  border: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--c-sakura-400) / 0.3),
+    transparent
+  );
+}
+.article-body table {
+  @apply my-6 w-full text-sm border-collapse overflow-hidden rounded-lg;
+}
+.article-body thead {
+  @apply bg-cosmos-700/35;
+}
+.article-body th {
+  @apply px-3 py-2 text-left font-medium text-mist-100 border border-cosmos-500/25;
+}
+.article-body td {
+  @apply px-3 py-2 border border-cosmos-500/20 text-mist-300;
+}
+.article-body tbody tr:hover {
+  @apply bg-night-800/45;
+}
+.article-body input[type='checkbox'] {
+  @apply mr-2 accent-sakura-400;
+}
+.article-body li input[type='checkbox'] {
+  @apply align-middle;
+}
+
+/* ---------- 代码高亮（贴合紫粉色调，色值随主题切换） ---------- */
+.hljs {
+  color: var(--hl-base);
+  background: transparent;
+}
+.hljs-comment,
+.hljs-quote {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-name {
+  color: var(--hl-keyword);
+  font-weight: 500;
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string {
+  color: var(--hl-string);
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-template-variable,
+.hljs-variable {
+  color: var(--hl-number);
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.function_,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: var(--hl-title);
+}
+.hljs-attr,
+.hljs-property,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--hl-attr);
+}
+.hljs-type,
+.hljs-params {
+  color: var(--hl-type);
+}
+.hljs-meta,
+.hljs-tag {
+  color: var(--hl-meta);
+}
+.hljs-deletion {
+  color: var(--hl-deletion);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 600;
+}

@@ -1,0 +1,57 @@
+@tailwind components;
+@tailwind utilities;
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--el-bg-color);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 品牌色微调，让后台和前台同源 */
+html.dark {
+  --el-color-primary: #d98cb8;
+  --el-color-primary-light-3: #b66c96;
+  --el-color-primary-light-5: #96577c;
+  --el-color-primary-light-7: #6d4560;
+  --el-color-primary-light-8: #4d3245;
+  --el-color-primary-light-9: #2e2033;
+  --el-color-primary-dark-2: #e8a8cc;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-darker);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--el-color-primary-light-5);
+  background-clip: content-box;
+}
+
+.page-card {
+  border-radius: 10px;
+}
+
+.table-cover {
+  width: 64px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--el-fill-color);
+}

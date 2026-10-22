@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="chibarie 的个人博客 —— 记录技术与生活" />
+    <meta name="theme-color" content="#0d0a1a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" as="image" href="/images/bg-hero.jpg" />
+    <title>chibarie</title>
+    <script>
+      // 在首屏渲染前定好主题，避免亮色用户看到一瞬暗色（FOUC）
+      // 注意：默认暗色，与 src/composables/useTheme.ts 的 initTheme 逻辑保持一致
+      ;(function () {
+        try {
+          if (localStorage.getItem('chibarie-theme') === 'light') {
+            document.documentElement.classList.add('light')
+          }
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

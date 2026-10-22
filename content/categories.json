@@ -1,0 +1,38 @@
+[
+  {
+    "name": "技术笔记",
+    "slug": "tech",
+    "description": "语言、框架与工程实践的记录",
+    "sort": 1
+  },
+  {
+    "name": "项目复盘",
+    "slug": "projects",
+    "description": "做过的项目与踩过的坑",
+    "sort": 2
+  },
+  {
+    "name": "生活随笔",
+    "slug": "life",
+    "description": "日常、阅读与碎碎念",
+    "sort": 3
+  },
+  {
+    "name": "AI",
+    "slug": "ai",
+    "description": "从知识库同步（topic: ai）",
+    "sort": 10
+  },
+  {
+    "name": "产品",
+    "slug": "pm",
+    "description": "从知识库同步（topic: pm）",
+    "sort": 10
+  },
+  {
+    "name": "开发",
+    "slug": "dev",
+    "description": "从知识库同步（topic: dev）",
+    "sort": 10
+  }
+]

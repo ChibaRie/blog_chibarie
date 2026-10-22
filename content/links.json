@@ -1,0 +1,16 @@
+[
+  {
+    "name": "阮一峰的网络日志",
+    "url": "https://www.ruanyifeng.com/blog/",
+    "avatar": "/uploads/2026/09/1789803026-c6d0e62f57c1df3f.png",
+    "description": "科技爱好者周刊",
+    "sort": 10
+  },
+  {
+    "name": "云风的 BLOG",
+    "url": "https://blog.codingnow.com/",
+    "avatar": "",
+    "description": "游戏引擎与编程随笔",
+    "sort": 20
+  }
+]

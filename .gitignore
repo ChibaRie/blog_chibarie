@@ -1,0 +1,52 @@
+# 依赖
+node_modules/
+vendor/
+
+# 构建产物
+dist/
+build/
+*.exe
+server/bin/
+.build-tmp/
+deploy/ready/
+
+# 数据库与用户上传内容（不入库）
+server/data/
+server/uploads/
+
+# 本地配置覆盖
+server/configs/config.local.yaml
+.env
+.env.local
+
+# 编辑器与系统
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 本地状态 / 私有记忆 / 旧后端产物
+.workbuddy/
+CODEBUDDY.md
+deploy/
+web/.workbuddy/
+web/node_modules.pnpm-broken/
+
+# 备份与本地临时库
+*.bak
+blog.db
+
+# 私有草稿（不进入公开仓库）
+content/drafts/
+
+# 构建时生成的内容索引
+web/src/generated/
+web/public/data/
+
+# 旧版知识库导入与种子脚本（含本地路径/默认口令）
+scripts/import-knowledge.mjs
+scripts/import-knowledge.state.json
+scripts/seed-guestbook.mjs
+scripts/seed-styling-reference.mjs
+scripts/fix-duplicate-h1.mjs
