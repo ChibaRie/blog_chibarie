@@ -70,5 +70,5 @@ export function useTheme() {
     })
   }
 
-  return { theme: readonly(theme), toggle, set }
+  return { theme: readonly(theme), toggle }
 }

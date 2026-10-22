@@ -40,7 +40,6 @@
 
   --shadow-soft: 0 8px 32px rgb(8 6 15 / 0.45);
   --shadow-glow: 0 0 24px rgb(217 140 184 / 0.22);
-  --shadow-glow-lg: 0 0 48px rgb(217 140 184 / 0.28);
 
   /* 代码高亮（暗色：浅色字压在深色底上） */
   --hl-base: #e4d6ea;
@@ -97,7 +96,6 @@ html.light {
 
   --shadow-soft: 0 8px 28px rgb(76 60 90 / 0.13);
   --shadow-glow: 0 0 22px rgb(196 101 155 / 0.18);
-  --shadow-glow-lg: 0 0 44px rgb(196 101 155 / 0.22);
 
   /* 代码高亮（亮色：深色字压在浅色底上） */
   --hl-base: #3b3446;
@@ -223,10 +221,6 @@ summary {
     @apply hover:bg-sakura-500/25 hover:text-sakura-200 hover:border-sakura-400/35;
   }
 
-  .meta-chip {
-    @apply inline-flex items-center gap-1 text-xs text-mist-400;
-  }
-
   .divider-glow {
     @apply h-px w-full border-0;
     background: linear-gradient(
@@ -292,9 +286,6 @@ summary {
     text-shadow:
       0 1px 16px rgb(255 255 255 / 0.92),
       0 0 32px rgb(255 255 255 / 0.6);
-  }
-  .mask-fade-bottom {
-    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
   }
 }
 

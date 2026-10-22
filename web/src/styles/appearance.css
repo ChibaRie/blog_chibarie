@@ -28,7 +28,6 @@
   --c-cosmos-700: 58 79 113;
   --shadow-soft: 0 10px 30px rgb(3 9 19 / .2);
   --shadow-glow: 0 5px 22px rgb(139 162 207 / .13);
-  --shadow-glow-lg: 0 8px 32px rgb(139 162 207 / .16);
   --petal-1: 245 195 218;
   --petal-2: 232 173 210;
   --petal-3: 201 177 230;
@@ -63,7 +62,6 @@ html.light {
   --c-cosmos-700: 197 211 234;
   --shadow-soft: 0 8px 25px rgb(44 66 102 / .08);
   --shadow-glow: 0 5px 22px rgb(72 97 151 / .1);
-  --shadow-glow-lg: 0 8px 32px rgb(72 97 151 / .12);
   --petal-1: 212 119 166;
   --petal-2: 195 107 158;
   --petal-3: 160 132 196;

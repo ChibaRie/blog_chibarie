@@ -17,12 +17,11 @@
 ```
 content/              # 文章、说说、站点配置
 web/                  # Vue 前台
-web/public/uploads/   # 图片
 web/scripts/          # 构建与检查脚本
 .github/workflows/    # Pages 部署
 ```
 
-`server/` 与 `admin/` 是旧版本地后台存档，不参与线上部署。
+图片放在 `web/public/uploads/`，该目录与 `server/`、`admin/`（旧版本地后台存档）只保留在本地，不进公开仓库。
 
 ## 本地开发
 

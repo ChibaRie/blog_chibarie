@@ -18,7 +18,6 @@ import type {
 } from './types'
 
 export * from './types'
-export type { PageData }
 
 interface ContentIndex {
   site: SiteInfo['site']

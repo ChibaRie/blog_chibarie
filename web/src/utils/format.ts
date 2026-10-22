@@ -39,17 +39,3 @@ export function formatNumber(n?: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
   return String(n)
 }
-
-export function yearOf(input?: string | null): string {
-  if (!input) return '未分类'
-  const d = new Date(input)
-  if (Number.isNaN(d.getTime())) return '未分类'
-  return String(d.getFullYear())
-}
-
-export function monthOf(input?: string | null): string {
-  if (!input) return ''
-  const d = new Date(input)
-  if (Number.isNaN(d.getTime())) return ''
-  return String(d.getMonth() + 1).padStart(2, '0')
-}

@@ -74,14 +74,6 @@ export default {
           'Noto Sans CJK SC',
           'sans-serif',
         ],
-        serif: [
-          'Source Han Serif SC',
-          'Noto Serif SC',
-          'Songti SC',
-          'SimSun',
-          'Georgia',
-          'serif',
-        ],
         mono: [
           'JetBrains Mono',
           'Fira Code',
@@ -94,35 +86,20 @@ export default {
       boxShadow: {
         soft: 'var(--shadow-soft)',
         glow: 'var(--shadow-glow)',
-        'glow-lg': 'var(--shadow-glow-lg)',
       },
       backdropBlur: {
         card: '14px',
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-8px)' },
-        },
         fadeUp: {
           from: { opacity: '0', transform: 'translateY(12px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
-        shimmer: {
-          '0%, 100%': { opacity: '0.55' },
-          '50%': { opacity: '1' },
-        },
       },
       animation: {
-        float: 'float 6s ease-in-out infinite',
         // 用 backwards 而非 both：both 会让动画结束后永久占用 transform，
         // 压住卡片 hover 的上浮效果（CSS 动画优先级高于普通声明）
         fadeUp: 'fadeUp 0.5s ease-out backwards',
-        shimmer: 'shimmer 3.5s ease-in-out infinite',
-      },
-      backgroundImage: {
-        'grid-glow':
-          'radial-gradient(circle at 50% 0%, rgb(var(--c-sakura-400) / 0.10), transparent 55%)',
       },
     },
   },

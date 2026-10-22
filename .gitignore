@@ -30,8 +30,12 @@ Thumbs.db
 .workbuddy/
 AGENTS.md
 deploy/
-web/.workbuddy/
-web/node_modules.pnpm-broken/
+admin/
+server/
+
+# 图片与含个人经历的文章只存本地，不进公开仓库
+web/public/uploads/
+content/posts/markdown-styling-reference-23.md
 
 # 备份与本地临时库
 *.bak
@@ -44,9 +48,5 @@ content/drafts/
 web/src/generated/
 web/public/data/
 
-# 旧版知识库导入与种子脚本（含本地路径/默认口令）
-scripts/import-knowledge.mjs
-scripts/import-knowledge.state.json
-scripts/seed-guestbook.mjs
-scripts/seed-styling-reference.mjs
-scripts/fix-duplicate-h1.mjs
+# 旧知识库迁移脚本（含本地路径/默认口令）
+scripts/
