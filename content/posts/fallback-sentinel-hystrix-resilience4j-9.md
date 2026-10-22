@@ -3,35 +3,23 @@ id: 9
 title: "服务降级与熔断详解：Fallback、熔断器状态机与 Sentinel / Hystrix / Resilience4j 选型"
 slug: "fallback-sentinel-hystrix-resilience4j"
 date: "2026-09-10T11:24:16+08:00"
-updated: "2026-09-19T15:41:14.199+08:00"
-summary: "这个熔断知识点和现在ccswitch的熔断服务很像，能够让我更深刻理解架构 来源：javaguide.cn URL：https://javaguide.cn/high-availability/fallback-and-circuit-br…"
+updated: "2026-10-22T16:42:00+08:00"
+summary: "最近在看 ccswitch 的熔断实现，回头把降级、熔断、限流和 Fallback 的资料重新过了一遍。这篇按自己的理解整理了核心概念、熔断器状态机，以及 Sentinel / Hystrix / Resilience4j 的选型。"
 cover: "/uploads/2026/09/1789799055-51803a236c8c15a7.gif"
 category: "dev"
-tags: ["imported-url","architecture","circuit-breaker","fallback","ccswitch"]
+tags: ["architecture","circuit-breaker","fallback","sentinel","resilience4j"]
 isTop: false
 draft: false
 ---
-## 我为什么存这个
+最近在看 ccswitch 的熔断实现，回头把降级和熔断的资料重新过了一遍。之前对这几个概念一直是混着理解的，这次把降级、Fallback、熔断器状态机、限流和选型串起来看，才慢慢分清它们各自管哪一段。
 
-这个熔断知识点和现在ccswitch的熔断服务很像，能够让我更深刻理解架构
-
-## 来源信息
-
-- 来源：javaguide.cn
-
-- URL：https://javaguide.cn/high-availability/fallback-and-circuit-breaker.html#%E7%94%A8-nacos-%E5%81%9A%E9%99%8D%E7%BA%A7%E5%BC%80%E5%85%B3%E6%97%B6%E8%A6%81%E6%B3%A8%E6%84%8F%E4%BB%80%E4%B9%88
-
-- 原文日期：2026-05-30T00:00:00+08:00
-
-- 提取方式：static/trafilatura
-
-## 原文摘录
+下面这些内容主要来自 JavaGuide 的整理，我按自己的理解重新排了一遍，原文链接放在最后。
 
 在微服务架构里，一个请求往往要经过好几个服务的调用链。如果链路上某个服务出了问题——比如响应变慢、超时甚至直接挂掉——很容易把上游的资源也拖垮，最后演变成整条链路雪崩。服务降级和熔断就是应对这类问题的两道防线：降级负责在系统压力大的时候主动"丢车保帅"，熔断负责在下游持续异常的时候及时"断路"止损。
 
-这篇文章会把降级和熔断的核心原理讲清楚，包括 Fallback 兜底、降级开关、熔断器状态机、隔离策略，以及 Sentinel、Hystrix、Resilience4j 的选型对比。
+下面从降级、Fallback、熔断器状态机一路讲到选型，尽量按实际写代码时会遇到的顺序来。
 
-[什么是降级？](https://javaguide.cn#什么是降级)
+## 什么是降级？
 
 服务降级，说白了就是：**系统快扛不住的时候，先牺牲不重要的功能，把资源留给核心链路。**
 
@@ -39,7 +27,7 @@ draft: false
 
 所以，降级是一套提前设计好的兜底方案，不是系统挂了以后随便返回个默认值。什么时候触发、关哪些功能、返回什么内容、怎么恢复，都应该提前想清楚。
 
-[降级一般在什么情况下触发？](https://javaguide.cn#降级一般在什么情况下触发)
+## 降级一般在什么情况下触发？
 
 很多人会把降级理解成“机器负载太高才降级”，其实不止这一种情况。
 
@@ -53,7 +41,7 @@ draft: false
 
 不管触发原因是什么，降级的核心目标都一样：**保核心，弃非核心。**
 
-[降级可以降到什么粒度？](https://javaguide.cn#降级可以降到什么粒度)
+## 降级可以降到什么粒度？
 
 降级的粒度可以粗，也可以细。
 
@@ -71,9 +59,9 @@ draft: false
 
 这里的 L0-L4、1-10 级都只是团队内部约定，不是行业统一标准。关键不在于怎么命名，而是要提前分清楚：**哪些功能可以牺牲，哪些功能必须保。**
 
-[降级方式有哪些？](https://javaguide.cn#降级方式有哪些)
+## 降级方式有哪些？
 
-[1. 延迟处理](https://javaguide.cn#_1-延迟处理)
+### 1. 延迟处理
 
 有些操作没必要同步完成，可以先放到 MQ 里慢慢处理。
 
@@ -81,7 +69,7 @@ draft: false
 
 但这里有个坑：MQ 也可能积压。如果消费者已经处理不过来了，生产者还一直重试，反而会把系统打得更严重。所以重试要加退避和随机抖动，必要时还要限流。
 
-[2. 页面片段降级](https://javaguide.cn#_2-页面片段降级)
+### 2. 页面片段降级
 
 这是最直观的一种方式：页面主体保留，把非核心区块关掉。
 
@@ -89,7 +77,7 @@ draft: false
 
 这种方式简单有效，但前提是你提前做好了开关和兜底逻辑。真出问题时再改代码、再发版，基本就来不及了。
 
-[3. 接口兜底降级](https://javaguide.cn#_3-接口兜底降级)
+### 3. 接口兜底降级
 
 页面里有些接口是异步加载的，比如配送时效、价格预测、推荐列表。它们如果超时，可以直接返回默认值或缓存值。
 
@@ -97,7 +85,7 @@ draft: false
 
 这里要注意一点：兜底数据最好提前准备好。不要等接口已经挂了，才临时去查数据库或重新生成缓存，那样很可能把故障继续放大。
 
-[4. 页面跳转降级](https://javaguide.cn#_4-页面跳转降级)
+### 4. 页面跳转降级
 
 如果完整页面太重，可以把用户导到一个简版页面或静态页面。
 
@@ -105,7 +93,7 @@ draft: false
 
 这种方案看起来简单，但一定要提前准备好静态页、路由规则和切换开关。线上出事后再临时做，基本不现实。
 
-[5. 写降级](https://javaguide.cn#_5-写降级)
+### 5. 写降级
 
 写降级适合一些“可以晚一点落库”的场景。
 
@@ -115,7 +103,7 @@ draft: false
 
 尤其要注意，**纯内存队列不适合保存关键数据**。节点一重启，数据就没了。
 
-[6. 读降级](https://javaguide.cn#_6-读降级)
+### 6. 读降级
 
 读降级通常是“只读缓存，不再访问后端服务”。
 
@@ -123,7 +111,7 @@ draft: false
 
 如果缓存也没命中，就不要继续硬调下游了。可以直接返回默认值、空结果或降级页。否则用户一次请求可能会把一串后端服务都拖进去。
 
-[降级开关怎么做？](https://javaguide.cn#降级开关怎么做)
+## 降级开关怎么做？
 
 降级必须能快速打开和关闭。不能每次都靠改代码、发版、重启。
 
@@ -142,7 +130,7 @@ draft: false
 
 所以降级开关设计时，要默认接受一个事实：**不同机器之间可能会有短暂不一致。**
 
-[用 Nacos 做降级开关时要注意什么？](https://javaguide.cn#用-nacos-做降级开关时要注意什么)
+## 用 Nacos 做降级开关时要注意什么？
 
 如果项目里用的是 Nacos，有几个坑要提前知道。
 
@@ -156,7 +144,7 @@ draft: false
 
 这也是为什么降级不能只依赖一个开关。关键链路最好还要配合超时、熔断、限流、缓存兜底一起做。
 
-[服务降级有哪些分类？](https://javaguide.cn#服务降级有哪些分类)
+## 服务降级有哪些分类？
 
 降级按照是否自动化可分为：
 
@@ -173,11 +161,11 @@ draft: false
 重试风暴：服务刚恢复，所有客户端同时重试，服务又被打挂。解决办法：带 Jitter 的指数退避、令牌桶限流、分组分批恢复。
 
 
-[大规模分布式系统如何降级？](https://javaguide.cn#大规模分布式系统如何降级)
+## 大规模分布式系统如何降级？
 
 在大规模分布式系统中，经常会有成百上千的服务。在大促前往往会根据业务的重要程度和业务间的关系批量降级。
 
-[降级平台能力](https://javaguide.cn#降级平台能力)
+## 降级平台能力
 
 大型互联网公司通常会有统一的降级平台，需要具备这些能力：
 
@@ -187,7 +175,7 @@ draft: false
 - **效果验证**：灰度 + 监控，指标对比确认降级生效且没误伤。
 - **一键回滚**：配置版本化，变更审计，出问题了快速回退。
 
-[降级预案制定](https://javaguide.cn#降级预案制定)
+## 降级预案制定
 
 - **业务分级**：先分清哪些服务不能动（如下单、支付），哪些可以关（如推荐、评论），定义优先级
 - **依赖分析**：画出调用链，找出关键路径和单点依赖——哪个挂了会连累一片
@@ -199,7 +187,7 @@ draft: false
 
 详细介绍：[CAP & BASE理论详解](https://javaguide.cn/distributed-system/protocol/cap-and-base-theorem.html)。
 
-[什么是 Fallback？](https://javaguide.cn#什么是-fallback)
+## 什么是 Fallback？
 
 Fallback 可以理解成：**兜底结果**。
 
@@ -211,7 +199,7 @@ Fallback 可以理解成：**兜底结果**。
 
 不过要注意，Fallback 不是用来“修好问题”的，它只是让系统在异常情况下还能勉强可用。用户看到的内容可能不完整，也可能不是最新的，但至少页面不会直接炸掉。
 
-[Sentinel 里的 blockHandler 和 fallback 有什么区别？](https://javaguide.cn#sentinel-里的-blockhandler-和-fallback-有什么区别)
+## Sentinel 里的 blockHandler 和 fallback 有什么区别？
 
 在 Sentinel 里，`blockHandler` 和 `fallback` 很容易被混在一起。它们都像是在“兜底”，但触发原因不一样。
 
@@ -233,7 +221,7 @@ Fallback 可以理解成：**兜底结果**。
 ![Sentinel：blockHandler 与 Fallback 的区别](https://oss.javaguide.cn/github/javaguide/high-availability/fallback-and-circuit-breaker-blockHandler-vs-Fallback.png)
 
 
-[常见的 Fallback 做法](https://javaguide.cn#常见的-fallback-做法)
+## 常见的 Fallback 做法
 
 常见的 Fallback 做法有这么几种：
 
@@ -242,7 +230,7 @@ Fallback 可以理解成：**兜底结果**。
 - **降级页面**：返回静态 HTML 或简化版页面，活动页、营销模块经常这么干。但静态资源本身也要有容灾——CDN 回源失败时的处理得提前想好。
 - **写降级**：先写 Redis 或本地消息表，异步同步到 DB。秒杀扣减、积分发放等高并发写场景常用。代价是需保证最终一致性（对账/补偿），纯内存队列在节点宕机时会丢数据。
 
-[Fallback 常见的坑](https://javaguide.cn#fallback-常见的坑)
+## Fallback 常见的坑
 
 Fallback 本身也可能出问题，而且这种问题比正常故障更难发现。常见的坑有这几个：
 
@@ -253,7 +241,7 @@ Fallback 本身也可能出问题，而且这种问题比正常故障更难发�
 
 说白了：Fallback 是最后一道防线，必须比正常调用更快更简单。如果兜底里面还藏着同步远程调用且没超时保护，那不是兜底，是埋雷。
 
-[什么是熔断？](https://javaguide.cn#什么是熔断)
+## 什么是熔断？
 
 熔断，名字听起来有点抽象，简单理解就是及时止损。它就是应对微服务雪崩效应的一种链路保护机制，类似电路中的保险丝。
 
@@ -269,7 +257,7 @@ Fallback 本身也可能出问题，而且这种问题比正常故障更难发�
 
 这有点像电路里的保险丝。电流异常时先断开，避免把后面的设备一起烧坏。
 
-[雪崩是怎么发生的？](https://javaguide.cn#雪崩是怎么发生的)
+## 雪崩是怎么发生的？
 
 很多线上雪崩不是一瞬间发生的，而是一层一层传开的。
 
@@ -288,7 +276,7 @@ Fallback 本身也可能出问题，而且这种问题比正常故障更难发�
 ![雪崩效应传播](https://oss.javaguide.cn/github/javaguide/high-availability/fallback-and-circuit-breaker-avalanche-effect-spread.png)
 
 
-[一个更接近真实情况的例子](https://javaguide.cn#一个更接近真实情况的例子)
+## 一个更接近真实情况的例子
 
 假设有一个广告点击链路：
 
@@ -308,7 +296,7 @@ Fallback 本身也可能出问题，而且这种问题比正常故障更难发�
 
 所以线上不是不能重试，而是重试必须有边界：要有超时时间、最大次数、退避策略，还要配合限流和熔断。
 
-[熔断器有哪几种状态？](https://javaguide.cn#熔断器有哪几种状态)
+## 熔断器有哪几种状态？
 
 熔断器包含三种状态：
 
@@ -321,7 +309,7 @@ Fallback 本身也可能出问题，而且这种问题比正常故障更难发�
 ![熔断器状态机](https://oss.javaguide.cn/github/javaguide/high-availability/fallback-and-circuit-breaker-fuse-state-machine.png)
 
 
-[Half-Open 和 Warm Up 不是一回事](https://javaguide.cn#half-open-和-warm-up-不是一回事)
+## Half-Open 和 Warm Up 不是一回事
 
 这两个概念很容易混。
 
@@ -343,7 +331,7 @@ Sentinel 的 Warm Up 属于流控里的冷启动策略，默认 `coldFactor` 是
 
 恢复期间不要只看平均耗时。平均值很容易掩盖少量极慢请求。更建议同时盯 P99、P999、线程池活跃数、数据库连接池活跃数和错误率。
 
-[Sentinel 支持哪些熔断策略？](https://javaguide.cn#sentinel-支持哪些熔断策略)
+## Sentinel 支持哪些熔断策略？
 
 Sentinel 1.8.0 之后，熔断降级主要有三类策略：慢调用比例、异常比例、异常数。官方文档里的 DegradeRule 也说明了这些字段，比如 `count`、`timeWindow`、`minRequestAmount`、`statIntervalMs`、`slowRatioThreshold` 等。
 
@@ -373,7 +361,7 @@ Sentinel 1.8.0 之后，熔断降级主要有三类策略：慢调用比例、�
 
 它比异常比例更直观，但对流量大小比较敏感。高 QPS 接口和低 QPS 接口不能套同一套阈值。
 
-[P99 能不能直接当熔断条件？](https://javaguide.cn#p99-能不能直接当熔断条件)
+## P99 能不能直接当熔断条件？
 
 不建议这么理解。
 
@@ -393,7 +381,7 @@ P99 是监控指标，适合用来观察接口整体表现，也适合辅助你�
 
 低 QPS 接口尤其要小心。如果窗口太短、最小请求数太小，一两个偶发慢请求就可能触发熔断。更稳的做法是适当拉长统计窗口，或者提高最小请求数。
 
-[降级和熔断有什么区别？](https://javaguide.cn#降级和熔断有什么区别)
+## 降级和熔断有什么区别？
 
 降级和熔断经常被放在一起说，但它们解决的问题不一样。
 
@@ -409,7 +397,7 @@ P99 是监控指标，适合用来观察接口整体表现，也适合辅助你�
 
 一句话记：**降级是"出了问题后怎么继续服务"，熔断是"异常依赖还要不要继续调"。**
 
-[限流、熔断、降级分别管什么？](https://javaguide.cn#限流、熔断、降级分别管什么)
+## 限流、熔断、降级分别管什么？
 
 这三个概念也很容易混。
 
@@ -431,7 +419,7 @@ Fallback 不是一个独立的治理策略，它更像是限流、熔断、降�
 打个比方：把系统想象成一个商场。限流就是控制进商场的人数，人太多了先在门口排队；降级就是商场临时关闭餐饮区和电影院，但超市、药店这些核心区域继续营业；熔断就是发现某个供应商出问题了，先暂停向它下单，过一会儿再少量试几单看看恢复没有。
 
 
-[一次请求里它们怎么协同？](https://javaguide.cn#一次请求里它们怎么协同)
+## 一次请求里它们怎么协同？
 
 一条真实请求链路里，限流、熔断、降级通常是分层生效的。
 
@@ -445,7 +433,7 @@ Fallback 不是一个独立的治理策略，它更像是限流、熔断、降�
 ![请求保护流程](https://oss.javaguide.cn/github/javaguide/high-availability/fallback-and-circuit-breaker-request-protection-process.png)
 
 
-[Sentinel 注解方式的最小示例](https://javaguide.cn#sentinel-注解方式的最小示例)
+## Sentinel 注解方式的最小示例
 
 下面这个例子先看懂 `blockHandler` 和 `fallback` 的分工就行：
 
@@ -481,7 +469,7 @@ public class OrderController {
 
 另外，不是所有业务异常都应该 fallback。比如参数校验失败、权限不足、库存不足，这些本来就应该明确告诉上游，不应该被统一兜底成"系统繁忙"。这类异常可以用 `exceptionsToIgnore` 排除掉。
 
-[有哪些现成解决方案？](https://javaguide.cn#有哪些现成解决方案)
+## 有哪些现成解决方案？
 
 Spring Cloud 体系里，常见的熔断、限流、降级方案主要有这几个：
 
@@ -492,7 +480,7 @@ Spring Cloud 体系里，常见的熔断、限流、降级方案主要有这几�
 
 版本号最好不要写死。Sentinel、Resilience4j 都还在更新，本文基于发文时可查的 Release，具体以各项目 GitHub Release 页面和版本矩阵为准。
 
-[Hystrix、Sentinel、Resilience4j 怎么选？](https://javaguide.cn#hystrix、sentinel、resilience4j-怎么选)
+## Hystrix、Sentinel、Resilience4j 怎么选？
 
 不用一上来就背功能表，先按项目情况判断。
 
@@ -514,7 +502,7 @@ Resilience4j 的特点是轻量、模块化。你需要熔断，就引 CircuitBr
 
 它和函数式编程、Reactor、Spring Boot 3 的组合会更自然一些。如果你的项目是 Spring Boot 3、Java 17+，又不依赖 Spring Cloud Alibaba 生态，Resilience4j 通常是更干净的选择。
 
-[简单对比](https://javaguide.cn#简单对比)
+## 简单对比
 
 | 维度 | Sentinel | Hystrix | Resilience4j | 
 |---|---|---|---|
@@ -530,7 +518,7 @@ Resilience4j 的特点是轻量、模块化。你需要熔断，就引 CircuitBr
 
 初学者只要记住三点：老项目 Hystrix 能稳定跑就先别急着动；Spring Cloud Alibaba / Dubbo 项目优先看 Sentinel；Spring Boot 3 / Java 17+ 新项目可以优先看 Resilience4j。
 
-[隔离策略怎么理解？](https://javaguide.cn#隔离策略怎么理解)
+## 隔离策略怎么理解？
 
 熔断只是"不继续调异常下游"，隔离解决的是"别让一个依赖把所有资源吃光"。
 
@@ -544,7 +532,7 @@ Resilience4j 的特点是轻量、模块化。你需要熔断，就引 CircuitBr
 ![隔离策略对比](https://oss.javaguide.cn/github/javaguide/high-availability/fallback-and-circuit-breaker-isolation-strategy-comparison.png)
 
 
-[Sentinel 的系统自适应保护是什么？](https://javaguide.cn#sentinel-的系统自适应保护是什么)
+## Sentinel 的系统自适应保护是什么？
 
 普通限流通常是手动设置一个阈值，比如 QPS 超过 1000 就限流。但真实系统不是这么简单，CPU、Load、RT、线程数、入口 QPS 都会影响系统是否已经接近极限。
 
@@ -565,7 +553,7 @@ Sentinel 的系统自适应保护就是想解决这个问题：不只看单个�
 
 有个坑要注意：Sentinel 系统规则看的是平均 RT，不是 P99。平均值会掩盖长尾延迟，所以生产环境最好额外接 P99、P999、线程池、连接池、错误率这些监控。
 
-[选型建议](https://javaguide.cn#选型建议)
+## 选型建议
 
 | 场景 | 推荐方案 | 原因 | 
 |---|---|---|
@@ -578,7 +566,7 @@ Sentinel 的系统自适应保护就是想解决这个问题：不只看单个�
 
 如果团队已经在用 Nacos、Spring Cloud Alibaba，选 Sentinel 的成本会比较低。如果团队偏原生 Spring Boot 3、Micrometer、Prometheus 这套监控体系，Resilience4j 往往更自然。
 
-[Hystrix 迁移到 Sentinel 要注意什么？](https://javaguide.cn#hystrix-迁移到-sentinel-要注意什么)
+## Hystrix 迁移到 Sentinel 要注意什么？
 
 老项目从 Hystrix 迁到 Sentinel，不是简单把注解换一下。
 
@@ -594,8 +582,12 @@ Sentinel 的系统自适应保护就是想解决这个问题：不只看单个�
 
 [Hystrix adapter](https://github.com/alibaba/Sentinel/tree/master/sentinel-adapter/sentinel-hystrix)过渡一下，但这个 adapter 本身的维护状态也要看一眼再决定。
 
-[小结](https://javaguide.cn#小结)
+## 小结
 
 新项目一般不建议再选 Hystrix，它已经进入维护模式，更适合作为存量系统的过渡方案。如果项目在 Spring Cloud Alibaba、Nacos、Dubbo 这条技术线上，Sentinel 通常更顺手。如果是 Spring Boot 3 / Java 17+ 的新项目，团队又更偏 Micrometer、Prometheus、Reactor 这套生态，Resilience4j 会更轻量。
 
 真正选型时别只看"谁功能多"，要看团队技术栈、Spring Cloud 版本、监控体系、规则是否要动态下发，以及后续谁来维护。
+
+这篇主要是把 JavaGuide 的降级与熔断文章重新读了一遍，顺手对照了 ccswitch 里的实现。落到项目里，我的感受是：不要先问“选 Sentinel 还是 Resilience4j”，先问“核心链路是哪几条、哪些依赖挂了可以退、兜底能不能比正常调用更快”。这些想清楚，工具只是最后一层。
+
+原文：<https://javaguide.cn/high-availability/fallback-and-circuit-breaker.html>
