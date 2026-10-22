@@ -3,181 +3,86 @@ id: 19
 title: "Skills 原理"
 slug: "claude-skills-principle"
 date: "2026-05-30T11:24:01+08:00"
-updated: "2026-09-19T15:22:45.624+08:00"
-summary: "我为什么存这个：今天读的专业资料，系统讲解 Claude Skills 的实现原理，正好对应我自己这套知识库的「渐进式披露」设计，需要把它的机制和 MCP 的分工吃透。 Claude Skills 是 Anthropic 推出的模块化能力扩…"
+updated: "2026-10-22T16:28:00+08:00"
+summary: "把 Claude Skills 的文档和例子翻了一遍，最值得记的是它的渐进式披露：元数据常驻，指令在触发时加载，脚本和参考资料按需读取。再配上 MCP，一个负责“懂什么”，一个负责“能调用什么”。"
 cover: "/uploads/2026/09/1789800734-ddc805134f5718b9.jpg"
 category: "ai"
-tags: ["Agent","claude-skills","mcp","progressive-disclosure","context-engineering","skill-authoring","sop"]
+tags: ["Agent","claude-skills","mcp","progressive-disclosure","context-engineering"]
 isTop: false
 draft: false
 ---
-## 原始内容
+最近把 Claude Skills 的官方文档和几个示例翻了一遍。它想解决的问题很具体：Agent 需要领域知识，但把所有 SOP、模板、脚本都塞进系统提示，上下文很快就满了，而且大部分内容在当前任务里根本用不上。
 
-> 我为什么存这个：今天读的专业资料，系统讲解 Claude Skills 的实现原理，正好对应我自己这套知识库的「渐进式披露」设计，需要把它的机制和 MCP 的分工吃透。
+Claude Skills 的做法是把领域知识打包成一个文件夹，放进 Agent 的沙盒文件系统里，需要的时候再读。
 
-Claude Skills 是 Anthropic 推出的模块化能力扩展方案，核心是通过「文件系统封装 + 渐进式披露」，为 Agent 注入标准化的领域 SOP（流程化知识），解决传统 Agent「领域知识零散、上下文占用过高、能力复用难」的痛点，已成为工业级 Agent 的核心标配能力。
+## 一个 Skill 里有什么
 
-### 一、核心定义
+每个 Skill 至少有一个 `SKILL.md`，开头是 YAML 元数据，下面是具体指令。旁边可以放脚本、模板、参考文档。拆开看就是三样东西：
 
-Claude Skills 是运行在 Claude 沙盒虚拟机（VM）中的**模块化知识包**，每个 Skill 封装「元数据 + 指令 + 资源」三要素，本质是向 Agent 注入「确定性领域知识」的标准化方案 —— 无需修改 Agent 核心逻辑，即可让其快速具备专业能力（如 PDF 处理、表单填写、商品导购）。
+- **元数据**：名称、描述、标签。作用是让 Agent 知道“这个 Skill 是干什么的、什么时候该用”。
+- **指令**：操作流程、SOP、边界条件。告诉 Agent 具体怎么做。
+- **资源**：脚本、模板、API 文档。真正执行时才会用到。
 
-Anthropic 官方定义：Agent Skills are modular capabilities that extend Claude's functionality. Each Skill packages instructions, metadata, and optional resources (scripts, templates) that Claude uses automatically when relevant.
-
-#### 1. 三大核心组成要素
-
-| 组成要素 | 核心内容 | 作用 | 示例（PDF 处理 Skill） |
-| --- | --- | --- | --- |
-| 元数据 | Skill 名称、描述、标签 | 帮助 Agent 快速识别「该 Skill 适配什么场景」 | `name: pdf-processing`；`description: 提取PDF文本/表格、合并文档` |
-| 指令 | 具体操作流程、SOP、使用规范 | 告知 Agent「如何执行该技能」 | 用 `pdfplumber` 提取文本的步骤、表单填写指南 |
-| 资源 | 可选辅助文件（脚本、模板、参考文档） | 提供工具支持，避免重复编码 | `fill_form.py` 脚本、`FORMS.md` 高级指南 |
-
-#### 2. 物理结构：文件夹化组织
-
-每个 Skill 对应一个独立文件夹，支持嵌套子 Skill，形成层级化知识体系：
+一个 PDF 处理的 Skill 大概长这样：
 
 ```text
 pdf-skill/
-├── SKILL.md        # 元数据（YAML头）+ 核心指令
-├── FORMS.md        # 扩展指令（表单填写高级指南）
-├── REFERENCE.md    # API参考文档
-└── scripts/        # 资源文件夹
-    └── fill_form.py  # 可执行脚本（表单填写工具）
+├── SKILL.md        # 元数据 + 核心指令
+├── FORMS.md        # 表单填写的高级说明
+├── REFERENCE.md    # API 参考
+└── scripts/
+    └── fill_form.py
 ```
 
-### 二、核心机制：渐进式披露（Progressive Disclosure）
+## 渐进式披露
 
-关键创新是「按需加载知识」，而非一次性塞入上下文，极大降低 Token 消耗，同时保证 Agent 聚焦当前任务。分三层加载：
+这是 Skills 最核心的机制。它不把整个文件夹一次性读进上下文，而是分三层加载。
 
-1. **第一层：元数据（始终加载）**
-   - 时机：Agent 启动时自动加载所有 Skill 的元数据
-   - 内容：仅名称、描述、标签，约 100 Token
-   - 作用：快速匹配场景（用户提「PDF 提取」，自动关联 `pdf-processing`）
+第一层是元数据。Agent 启动时只加载所有 Skill 的名称和描述，大概一百个 Token。用户说“帮我从这份 PDF 里提表格”，Agent 根据描述匹配到 `pdf-processing`。
 
-2. **第二层：核心指令（触发时加载）**
-   - 时机：判断场景匹配后，通过 Bash 工具读取 `SKILL.md` 主体
-   - 内容：具体操作流程、基础 SOP
-   - 作用：掌握该 Skill 的核心执行逻辑，不占用冗余上下文
+第二层是核心指令。匹配上之后，Agent 用 Bash 读 `SKILL.md` 的主体，拿到具体流程和基础 SOP。
 
-3. **第三层：资源与代码（按需加载）**
-   - 时机：执行过程中需要高级功能时
-   - 内容：读取扩展文档（`FORMS.md`）或执行脚本（`fill_form.py`）
-   - 关键优势：**脚本代码永不进入上下文**，仅返回执行结果，避免 Token 浪费
+第三层是资源和代码。执行过程中需要填表单，才去读 `FORMS.md`；需要批量处理，才运行 `fill_form.py`。脚本代码本身不进上下文，只把执行结果带回来。
 
-核心价值：通过分层加载，把一个复杂 Skill 的 Token 占用从「数千」压缩至「百级」，同时保证 Agent 仅获取当前所需知识。
+这样做的收益很直接：一个复杂 Skill 的上下文占用可以从几千 Token 压到百级，而且 Agent 当前看到的只有当前任务需要的那部分。
 
 ![Claude Skills 渐进式披露时序图](/uploads/imports/assets/claude-skills-principle/claude-skills-progressive-disclosure.png)
 
-### 三、与 MCP 的关系
+## Skills 和 MCP 不是一回事
 
-两者不是竞争关系，而是工业级 Agent 的「左膀右臂」：
+这两个东西经常被放在一起说，但分工很清楚。
 
-| 对比维度 | Claude Skills | MCP（Model Context Protocol） |
-| --- | --- | --- |
-| 核心定位 | 内部领域知识包（SOP、流程、专业规则） | 外部工具连接标准（API、服务、数据库） |
-| 作用范围 | 解决「Agent 懂什么」（知识注入） | 解决「Agent 能调用什么」（工具扩展） |
-| 运行环境 | Claude 沙盒 VM（文件系统） | 跨平台通用协议（支持多 AI / 多工具） |
-| 典型场景 | PDF 处理、商品导购 SOP、表单填写规则 | 调用 Jira、Stripe、商品数据库 API |
+Skills 管的是“Agent 懂什么”。它把领域里的流程、规则、模板、脚本组织起来，让 Agent 按一套确定的方法做事。MCP 管的是“Agent 能调用什么”。它把外部 API、数据库、服务接进来，让 Agent 能真正查数据、发请求、操作系统。
 
-协同逻辑：Skills 提供「做事的方法」，MCP 提供「做事的工具」，二者结合实现「有知识 + 有工具」的完整 Agent 能力。
+一个偏知识，一个偏工具。Skills 告诉 Agent 怎么做，MCP 给它做事的工具。两个都有，才算一个能落地的 Agent。
 
 ![Agent + Skills + Computer 架构图](/uploads/imports/assets/claude-skills-principle/claude-skills-overview.png)
 
-### 四、实现方式：官方方案 + 第三方适配
+## 官方实现和第三方适配
 
-#### 1. 官方方案（Anthropic 开源）
+Anthropic 的方案就是文件系统：把 Skill 文件夹放进沙盒 VM，`SKILL.md` 里写元数据和指令，Claude 网页端、API、Claude Code 都能直接用。
 
-基于文件系统的文件夹结构，通过 `SKILL.md` 封装三要素，支持 Claude 网页端、API、Claude Code 直接使用：
+非 Claude 的 Agent 也有办法。开源项目 `openskills` 把 Skill 指令写进 `AGENTS.md` 之类的项目文件，通过 `openskills read <skill-name>` 用 Bash 读出来，再注入上下文。思路和 Claude 一样，只是换了一个加载入口。
 
-```yaml
----
-name: pdf-processing
-description: 提取PDF文件中的文本和表格，填写表单，合并文档。当处理PDF文件或用户提及PDF、表单或文档提取时使用。
-tags: [pdf, document, text-extraction]
----
+## 一个导购助手的例子
 
-# PDF处理技能
+假设要做一个主动询问、收集参数、匹配商品、给出推荐的导购 Agent。比较自然的拆法是按流程阶段拆成三个 Skill：
 
-## 快速入门
-使用 `pdfplumber` 提取PDF文本……
+- `01-parameter-collection`：问清商品类型、预算、关键参数，附一套询问话术。
+- `02-product-matching`：按预算、参数、销量排序，脚本负责匹配，结果回传。
+- `03-recommendation`：根据匹配结果组织推荐话术，突出参数和售后。
 
-## 高级功能
-如需填写表单，参阅 [FORMS.md](FORMS.md)；
-如需执行批量处理，运行 scripts/fill_form.py 脚本。
-```
+这样做的好处是改一处不影响其他部分。想调整匹配规则，只动 `02`；想加售后咨询，再加一个 `04`，不用重构整个 Agent。
 
-#### 2. 第三方适配（支持非 Claude Agent）
+## 我记下来的几点
 
-开源项目 `openskills` 提供通用实现，无需依赖 Claude 沙盒，支持 Qwen Code、Codex 等 Agent：
+- **描述比名字重要。** `description` 决定模型什么时候会加载这个 Skill。写“处理 PDF 文件，提取文本和表格、填表单、合并多个 PDF”，比写“帮助处理 PDF”有用得多。
+- **能写成脚本的，就别写进正文。** 脚本执行结果才进上下文，代码本身不进，既省 Token，也少一类注入风险。
+- **按流程阶段拆 Skill。** 一个 Skill 管一段流程，比做一个大而全的“万能助手”更容易维护。
+- **先判断缺的是知识还是工具。** 缺 SOP 就做 Skill，缺外部数据就接 MCP，不要用一个东西硬套另一个场景。
 
-- 将 Skills 写入 `AGENTS.md`，通过 Bash 命令 `openskills read [skill-name]` 调用
-- 示例调用逻辑（Python）：
+参考：
 
-```python
-def call_skill(skill_name: str) -> str:
-    # 通过 Bash 读取 Skill 指令
-    result = subprocess.run(
-        ["openskills", "read", skill_name],
-        capture_output=True,
-        text=True
-    )
-    return result.stdout  # 返回 Skill 核心指令，注入 Agent 上下文
-```
-
-### 五、落地实践：主动式智能导购 AI 助手
-
-结合 Multi-Agent 架构与 Claude Skills，构建「主动询问→参数收集→商品匹配→精准推荐」的智能导购助手。
-
-#### 1. Skill 设计（模块化拆分）
-
-```text
-shopping-assistant-skills/
-├── 01-parameter-collection/  # 参数收集Skill
-│   ├── SKILL.md   # 元数据 + 询问SOP（商品类型、预算、参数）
-│   └── templates/ # 询问话术模板
-├── 02-product-matching/      # 商品匹配Skill
-│   ├── SKILL.md   # 元数据 + 匹配规则（预算优先→参数匹配→销量排序）
-│   └── scripts/   # 匹配算法脚本 match_products.py
-└── 03-recommendation/        # 推荐话术Skill
-    └── SKILL.md   # 元数据 + 推荐SOP（突出参数匹配点、售后保障）
-```
-
-#### 2. 核心工作流程
-
-1. **场景匹配**：加载所有 Skill 元数据，匹配「商品导购」场景
-2. **参数收集**：触发 `parameter-collection`，按模板主动收集需求
-3. **商品匹配**：触发 `product-matching`，通过 MCP 调用商品数据库 API，执行 `match_products.py`（脚本不进上下文，只返回结果）
-4. **精准推荐**：触发 `recommendation`，生成个性化推荐话术，完成闭环
-
-#### 3. 核心优势（对比传统导购 Agent）
-
-- **知识复用**：Skill 可独立迭代（更新匹配规则只改 `02-product-matching`）
-- **上下文优化**：分层加载使单轮对话 Token 占用降低 60%
-- **灵活扩展**：新增「售后咨询」只需加 `04-after-sales` Skill，无需重构核心逻辑
-
-### 总结
-
-Claude Skills 的核心价值是「让 Agent 快速具备领域专家能力」—— 通过模块化封装、渐进式披露，解决知识注入的「高效性」与「复用性」问题，搭配 MCP 的外部工具连接能力，构成工业级 Agent 的完整技术栈。
-
-### 原文参考链接
-
-- Anthropic 开源的 Agent Skills：https://github.com/anthropics/skills/blob/main/theme-factory/SKILL.md
-- 专家知识包 superpowers：https://github.com/obra/superpowers/tree/main/skills
-- 参考文章：https://mp.weixin.qq.com/s/bwFGcomH6BfkBzhFMiiH1g
-
-### 附件图片
-
-- `../assets/claude-skills-principle/claude-skills-overview.png` —— Agent + Skills + Computer：Agent 配置区（Core system prompt / Equipped Skills / Equipped MCP servers）与 Agent 虚拟机（Bash、Python、Nodejs + skills 文件目录树），说明 Skill 目录实际活在 VM 文件系统里，远程 MCP 服务器在网络另一侧。
-- `../assets/claude-skills-principle/claude-skills-progressive-disclosure.png` —— 渐进式披露时序图：启动时加载全部元数据 → 用户请求「提取 PDF 文本并总结」→ 匹配 `pdf-processing` → `bash: read pdf-skill/SKILL.md` → 核心指令进入上下文 → 按需读 `FORMS.md` 或执行脚本 → 返回结果。
-
-## 摘要
-
-Claude Skills 是 Anthropic 的模块化能力扩展方案，本质是「元数据 + 指令 + 资源」三要素组成、以文件夹形式组织在 Agent 沙盒 VM 里的领域知识包。它靠**渐进式披露**三层加载（元数据常驻 ≈100 Token → 触发时读 SKILL.md → 按需读扩展文档/执行脚本）把 Token 占用从数千压到百级，其中脚本执行结果不进上下文。与 MCP 的分工是：Skills 给「懂什么」（SOP/知识），MCP 给「能调用什么」（外部工具/API），两者协同才是完整工业级 Agent。
-
-## 可复用点
-
-1. **渐进式披露可直接套用到本知识库**：和 `AGENTS.md` 里「先读 status/topics，再检索候选路径，最后只读命中原文」是同一套思想。本文给了更规范的三层模型和 Token 数量级参考，可反过来校准本系统的检索规则。
-2. **Skill 三要素模板**（元数据 / 指令 / 资源）可作为写 skill 的检查清单：description 要写清「什么场景触发」，资源尽量下沉成脚本，别写进正文。
-3. **脚本不进上下文、只回结果** —— 这条是本知识库 `scripts/` 设计的理论依据，解释清了为什么检索要走脚本而不是预读文件。
-4. **「知识 + 工具」的 MCP/Skills 二分法** 可作为判断依据：一个新需求该做成 skill（方法论）还是接 MCP（外部数据），看它缺的是「怎么做」还是「数据从哪来」。
-5. **模块化拆分范例**（导购 assistant 拆成收集/匹配/推荐三个 Skill）提供了「按流程阶段拆 skill」的实操样板，迭代时只改局部。
-6. **openskills 第三方适配思路**：把 skill 写进 `AGENTS.md` + `openskills read <name>` 通过 Bash 注入，是让非 Claude Agent（Codex/Qwen Code）复用 skill 体系的一条路径 —— 与本项目现有 AGENTS.md 机制高度同源。
+- <https://github.com/anthropics/skills>
+- <https://github.com/obra/superpowers/tree/main/skills>
+- <https://mp.weixin.qq.com/s/bwFGcomH6BfkBzhFMiiH1g>
