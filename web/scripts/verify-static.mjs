@@ -99,7 +99,7 @@ for (const image of brokenImages) failures.push(`[image] ${image}`)
 // 搜索
 await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' })
 await page.locator('input[type="search"]').fill('Vue')
-await page.waitForTimeout(800)
+await page.waitForTimeout(2200)
 const searchText = await page.locator('body').innerText()
 console.log(`search has result: ${searchText.includes('组合式 API')}`)
 if (!searchText.includes('组合式 API')) failures.push('[search] 未搜到 Vue 文章')
