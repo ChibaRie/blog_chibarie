@@ -40,6 +40,19 @@ const heroPaused = ref(false)
 const HERO_INTERVAL = 6000
 let heroTimer: ReturnType<typeof setInterval> | undefined
 
+// 每次进入/刷新首页，从随机一张开始；站点信息是异步加载的，
+// 等拿到真实列表再抽一次，且只抽一次，避免后续更新把用户看到的那张换掉
+let heroSeeded = false
+watch(
+  heroImages,
+  (list) => {
+    if (heroSeeded || list.length < 2) return
+    heroIndex.value = Math.floor(Math.random() * list.length)
+    heroSeeded = true
+  },
+  { immediate: true },
+)
+
 function nextHero() {
   if (heroImages.value.length < 2) return
   heroIndex.value = (heroIndex.value + 1) % heroImages.value.length
