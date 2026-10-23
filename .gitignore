@@ -47,5 +47,5 @@ content/drafts/
 web/src/generated/
 web/public/data/
 
-# 旧知识库迁移脚本（含本地路径/默认口令）
-scripts/
+# 旧知识库迁移脚本（含本地路径/默认口令）——只忽略仓库根目录那份
+/scripts/

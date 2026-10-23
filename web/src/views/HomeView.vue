@@ -61,6 +61,13 @@ function goToHero(index: number) {
   restartHeroTimer()
 }
 
+function stepHero(delta: number) {
+  const total = heroImages.value.length
+  if (total < 2) return
+  heroIndex.value = (heroIndex.value + delta + total) % total
+  restartHeroTimer()
+}
+
 watch([heroImages, heroPaused], restartHeroTimer)
 
 const heroStats = computed(() => {
@@ -240,6 +247,50 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <button
+        v-if="heroImages.length > 1"
+        type="button"
+        class="hero-nav left-3 sm:left-6 lg:left-10"
+        aria-label="上一张头图"
+        @click="stepHero(-1)"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 5 L8 12 L15 19" />
+        </svg>
+      </button>
+
+      <button
+        v-if="heroImages.length > 1"
+        type="button"
+        class="hero-nav right-3 sm:right-6 lg:right-10"
+        aria-label="下一张头图"
+        @click="stepHero(1)"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 5 L16 12 L9 19" />
+        </svg>
+      </button>
+
       <div
         v-if="heroImages.length > 1"
         class="absolute bottom-[92px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-2"
@@ -370,6 +421,42 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.hero-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  display: flex;
+  height: 40px;
+  width: 40px;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(246, 226, 236, 0.28);
+  background: rgba(8, 6, 15, 0.3);
+  color: rgba(246, 226, 236, 0.86);
+  opacity: 0.62;
+  backdrop-filter: blur(6px);
+  transition:
+    opacity 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.hero-nav:hover,
+.hero-nav:focus-visible {
+  opacity: 1;
+  border-color: rgba(217, 140, 184, 0.7);
+  background: rgba(8, 6, 15, 0.5);
+  color: #f0c4de;
+}
+
+.hero-nav:focus-visible {
+  outline: 2px solid rgba(240, 196, 222, 0.85);
+  outline-offset: 2px;
+}
+
 .hero-scroll {
   position: absolute;
   bottom: 22px;

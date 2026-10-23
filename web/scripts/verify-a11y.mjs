@@ -3,7 +3,7 @@
  */
 import { chromium } from 'playwright-core'
 
-const BASE = 'http://localhost:5173'
+const BASE = process.env.BASE || 'http://localhost:5173'
 const SHOTS = 'D:/Code/my_projects/blog_chibarie/.workbuddy/shots'
 
 const browser = await chromium.launch({
