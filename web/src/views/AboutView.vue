@@ -4,6 +4,7 @@ import { useSite } from '@/composables/useSite'
 import SocialLinks from '@/components/SocialLinks.vue'
 import { withBase } from '@/utils/asset'
 import { formatNumber } from '@/utils/format'
+import { imagePreview as vImagePreview } from '@/directives/imagePreview'
 
 const { siteInfo } = useSite()
 
@@ -79,6 +80,7 @@ const aboutHtml = computed(() => siteInfo.value?.site.aboutHtml || '')
     <article
       v-if="aboutHtml"
       class="glass-card article-body p-6 sm:p-8"
+      v-image-preview
       v-html="aboutHtml"
     />
 

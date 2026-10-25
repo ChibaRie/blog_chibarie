@@ -3,8 +3,10 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import type { Note } from '@/api'
 import { useSite } from '@/composables/useSite'
 import { formatDate, formatNumber, formatRelative } from '@/utils/format'
+import { useImageViewer } from '@/composables/useImageViewer'
 
 const props = defineProps<{ note: Note; liked: boolean }>()
+const { open: openImageViewer } = useImageViewer()
 defineEmits<{ like: [] }>()
 const { siteInfo } = useSite()
 const avatar = computed(() => siteInfo.value?.site.avatar || '')
@@ -23,6 +25,11 @@ let revision = 0
 function measure() {
   const text = textRef.value
   if (text) textOverflow.value = text.scrollHeight > parseFloat(getComputedStyle(text).lineHeight) * 6 + 1
+}
+
+function previewImage(index: number, event: MouseEvent) {
+  ;(event.currentTarget as HTMLButtonElement).focus({ preventScroll: true })
+  openImageViewer(props.note.images.map((src, i) => ({ src, alt: `说说配图 ${i + 1}` })), index)
 }
 
 async function toggle() {
@@ -86,12 +93,12 @@ onUnmounted(() => { revision++; observer?.disconnect(); resizeAnimation?.cancel(
         <div v-if="note.images.length" :id="`note-images-${note.id}`" ref="galleryRef" class="note-gallery mt-3 grid gap-2"
           :style="{ '--note-image-columns': Math.min(3, note.images.length) }"
           :class="note.images.length === 1 ? 'grid-cols-1' : note.images.length <= 4 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'">
-          <a v-for="(image, index) in note.images" :key="image" :href="image" target="_blank" rel="noopener noreferrer"
-            :inert="!expanded && index >= 3" class="group block overflow-hidden rounded-lg border border-mist-400/12">
+          <button v-for="(image, index) in note.images" :key="image" type="button" :aria-label="`查看说说配图 ${index + 1}`"
+            :inert="!expanded && index >= 3" class="group block overflow-hidden rounded-lg border border-mist-400/12" @click="previewImage(index, $event)">
             <img :src="image" :alt="`说说配图 ${index + 1}`" loading="lazy"
               class="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               :class="note.images.length === 1 ? 'max-h-[420px]' : 'aspect-square'">
-          </a>
+          </button>
         </div>
         <div class="mt-3.5 flex items-center gap-4">
           <button class="inline-flex items-center gap-1.5 text-[12px] transition-colors" data-testid="note-like"

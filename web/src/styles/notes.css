@@ -21,10 +21,10 @@
   max-height: 168px;
   overflow: hidden;
 }
-.note-compact .note-gallery > a {
+.note-compact .note-gallery > button {
   aspect-ratio: 1;
 }
-.note-compact .note-gallery > a:nth-child(n+4) { display: none; }
+.note-compact .note-gallery > button:nth-child(n+4) { display: none; }
 .note-compact .note-gallery img {
   width: 100%; height: 100%; max-height: none;
   aspect-ratio: 1;

@@ -6,6 +6,7 @@ import PageLoader from '@/components/PageLoader.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import AppearancePanel from '@/components/AppearancePanel.vue'
+import ImageViewer from '@/components/ImageViewer.vue'
 import { useAppearance } from '@/composables/useAppearance'
 
 const { settings } = useAppearance()
@@ -30,6 +31,7 @@ const { settings } = useAppearance()
 
     <PageLoader />
     <AppearancePanel />
+    <ImageViewer />
   </div>
 </template>
 

@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { fetchPost, likePost, type Post, type TocItem } from '@/api'
 import { useSite } from '@/composables/useSite'
 import { formatDate, formatNumber } from '@/utils/format'
+import { imagePreview as vImagePreview } from '@/directives/imagePreview'
 
 const route = useRoute()
 const { siteInfo } = useSite()
@@ -187,7 +188,7 @@ watch(
 
         <div class="divider-glow my-7" />
 
-        <div class="article-body" v-html="html" />
+        <div v-image-preview class="article-body" v-html="html" />
 
         <div v-if="post.tags?.length" class="mt-8 flex flex-wrap gap-2">
           <RouterLink
