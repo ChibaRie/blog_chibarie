@@ -79,7 +79,7 @@ const aboutHtml = computed(() => siteInfo.value?.site.aboutHtml || '')
 
     <article
       v-if="aboutHtml"
-      class="glass-card article-body p-6 sm:p-8"
+      class="about-content glass-card article-body p-6 text-center sm:p-8"
       v-image-preview
       v-html="aboutHtml"
     />
@@ -89,3 +89,17 @@ const aboutHtml = computed(() => siteInfo.value?.site.aboutHtml || '')
     </p>
   </div>
 </template>
+
+<style scoped>
+.about-content :deep(h2) {
+  padding-left: 0;
+}
+.about-content :deep(h2::before) {
+  display: none;
+}
+.about-content :deep(ul),
+.about-content :deep(ol) {
+  padding-left: 0;
+  list-style: none;
+}
+</style>

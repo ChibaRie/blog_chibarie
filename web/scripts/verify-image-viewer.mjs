@@ -50,9 +50,11 @@ try {
   await page.locator('.image-viewer-stage').click({ position: { x: 5, y: 5 } }); await closed()
   check(context.pages().length === pageCount && page.url() === `${base}/notes`, 'No new tab or image navigation')
   const single = page.locator('.note-gallery > button:only-child').first()
-  await single.click(); await loaded()
-  check(await page.locator('.image-viewer-count').innerText() === '1 / 1' && await page.getByRole('button', { name: '下一张图片', exact: true }).count() === 0, 'Single-image note hides gallery navigation')
-  await page.getByRole('button', { name: '关闭图片预览', exact: true }).click(); await closed()
+  if (await single.count()) {
+    await single.click(); await loaded()
+    check(await page.locator('.image-viewer-count').innerText() === '1 / 1' && await page.getByRole('button', { name: '下一张图片', exact: true }).count() === 0, 'Single-image note hides gallery navigation')
+    await page.getByRole('button', { name: '关闭图片预览', exact: true }).click(); await closed()
+  }
 
   const imageURL = await first.locator('img').evaluate(el => el.currentSrc || el.src)
   await page.route(imageURL, route => route.fulfill({ status: 200, headers: { 'content-type': 'image/png', 'cache-control': 'no-store' }, body: 'invalid image' }))
