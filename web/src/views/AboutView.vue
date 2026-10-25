@@ -91,6 +91,11 @@ const aboutHtml = computed(() => siteInfo.value?.site.aboutHtml || '')
 </template>
 
 <style scoped>
+.about-content {
+  width: 100%;
+  max-width: 1000px;
+  margin-inline: auto;
+}
 .about-content :deep(h2) {
   padding-left: 0;
 }
