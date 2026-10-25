@@ -41,61 +41,59 @@ onMounted(async () => {
 
 <template>
   <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-    <div class="glass-card p-5 sm:p-8" data-testid="archive-panel">
-      <header class="mb-10">
-        <h1 class="text-2xl font-medium tracking-tight text-mist-100">归档</h1>
-        <p class="mt-2 text-sm text-mist-400">
-          共 {{ items.length }} 篇文章，按年份排列
-        </p>
-      </header>
+    <header class="mb-10">
+      <h1 class="text-2xl font-medium tracking-tight text-mist-100">归档</h1>
+      <p class="mt-2 text-sm text-mist-500">
+        共 {{ items.length }} 篇文章，按年份排列
+      </p>
+    </header>
 
-      <div v-if="loading" class="space-y-3">
-        <div
-          v-for="i in 5"
-          :key="i"
-          class="h-10 animate-pulse rounded-lg bg-night-700/40"
-        />
-      </div>
+    <div v-if="loading" class="space-y-3">
+      <div
+        v-for="i in 5"
+        :key="i"
+        class="h-10 animate-pulse rounded-lg bg-night-700/40"
+      />
+    </div>
 
-      <div v-else-if="error" class="glass-card p-8 text-center text-sm text-mist-400">
-        {{ error }}
-      </div>
+    <div v-else-if="error" class="glass-card p-8 text-center text-sm text-mist-400">
+      {{ error }}
+    </div>
 
-      <div v-else-if="items.length === 0" class="glass-card p-10 text-center text-sm text-mist-500">
-        还没有文章。
-      </div>
+    <div v-else-if="items.length === 0" class="glass-card p-10 text-center text-sm text-mist-500">
+      还没有文章。
+    </div>
 
-      <div v-else class="space-y-10">
-        <section v-for="group in grouped" :key="group.year">
-          <h2
-            class="mb-4 flex items-center gap-3 text-lg font-medium text-mist-100"
-          >
-            <span class="text-sakura-300">{{ group.year }}</span>
-            <span class="h-px flex-1 bg-mist-400/12" />
-            <span class="text-xs font-normal text-mist-400">
-              {{ group.list.length }} 篇
-            </span>
-          </h2>
+    <div v-else class="space-y-10">
+      <section v-for="group in grouped" :key="group.year">
+        <h2
+          class="mb-4 flex items-center gap-3 text-lg font-medium text-mist-100"
+        >
+          <span class="text-sakura-300">{{ group.year }}</span>
+          <span class="h-px flex-1 bg-mist-400/12" />
+          <span class="text-xs font-normal text-mist-600">
+            {{ group.list.length }} 篇
+          </span>
+        </h2>
 
-          <ul class="space-y-1">
-            <li v-for="item in group.list" :key="item.id">
-              <RouterLink
-                :to="`/post/${item.slug || item.id}`"
-                class="group flex min-h-[44px] items-baseline gap-3 rounded-lg px-2 py-3 transition-colors duration-200 hover:bg-sakura-500/8 sm:gap-5 sm:px-3"
+        <ul class="space-y-1">
+          <li v-for="item in group.list" :key="item.id">
+            <RouterLink
+              :to="`/post/${item.slug || item.id}`"
+              class="group flex items-baseline gap-4 rounded-lg px-3 py-2 transition-colors duration-200 hover:bg-sakura-500/8"
+            >
+              <time class="shrink-0 font-mono text-xs text-mist-600">
+                {{ formatDate(item.publishedAt || item.createdAt).slice(5) }}
+              </time>
+              <span
+                class="min-w-0 flex-1 truncate text-sm text-mist-300 transition-colors group-hover:text-sakura-200"
               >
-                <time class="shrink-0 font-mono text-sm text-mist-400">
-                  {{ formatDate(item.publishedAt || item.createdAt).slice(5) }}
-                </time>
-                <span
-                  class="min-w-0 flex-1 break-words text-base leading-relaxed text-mist-100 transition-colors group-hover:text-sakura-200"
-                >
-                  {{ item.title }}
-                </span>
-              </RouterLink>
-            </li>
-          </ul>
-        </section>
-      </div>
+                {{ item.title }}
+              </span>
+            </RouterLink>
+          </li>
+        </ul>
+      </section>
     </div>
   </div>
 </template>
