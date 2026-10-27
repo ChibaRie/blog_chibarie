@@ -3,7 +3,7 @@
 
 vue3 ts vite
 
-叼你公龟. it s just a static page
+**叼你公龟. it s just a static page**
 
 图片放在 `web/public/uploads/`，该目录与 `server/`、`admin/`（旧版本地后台存档）只保留在本地，不进公开仓库。
 
