@@ -3,6 +3,7 @@ title: "运维面试复习笔记：Linux、网络、Docker 与 Kubernetes"
 slug: "operations-interview-linux-network-containers"
 date: "2026-10-28T11:30:00+08:00"
 summary: "从一份运维面试题出发，按 Linux、网络、Docker、Kubernetes 和上线变更梳理复习思路，重点区分工具输出、故障判断与验证方法，并核对容易背错的技术细节。"
+cover: "/uploads/2026/10/20261028-operations-interview-cover.jpg"
 category: "tech"
 tags: ["Linux", "Docker", "Kubernetes", "Nginx", "运维", "面试"]
 isTop: false
