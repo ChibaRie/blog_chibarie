@@ -68,7 +68,6 @@ export interface PostQuery {
 }
 
 const LIKED_POSTS_KEY = 'chibarie-liked-posts'
-const LIKED_NOTES_KEY = 'chibarie-liked-notes'
 
 function readIds(key: string): number[] {
   try {
@@ -173,12 +172,7 @@ export const fetchTags = async (): Promise<Tag[]> => content.tags
 export async function fetchNotes(
   params: { page?: number; pageSize?: number } = {},
 ): Promise<PageData<Note>> {
-  const liked = readIds(LIKED_NOTES_KEY)
-  const list = content.notes.map((note) => ({
-    ...note,
-    likes: note.likes + (liked.includes(note.id) ? 1 : 0),
-  }))
-  return pageOf(list, params.page, params.pageSize)
+  return pageOf(content.notes, params.page, params.pageSize)
 }
 
 export const fetchArchive = async (): Promise<ArchiveItem[]> => content.archive

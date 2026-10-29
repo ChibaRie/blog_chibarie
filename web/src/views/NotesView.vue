@@ -17,22 +17,7 @@ const page = ref(1)
 const loading = ref(true)
 const loadingMore = ref(false)
 
-const LIKE_KEY = 'chibarie-liked-notes'
-const likedIds = ref<number[]>([])
-
 const hasMore = computed(() => notes.value.length < total.value)
-
-function readLiked(): number[] {
-  try {
-    return JSON.parse(localStorage.getItem(LIKE_KEY) || '[]') as number[]
-  } catch {
-    return []
-  }
-}
-
-function persistLiked(ids: number[]) {
-  localStorage.setItem(LIKE_KEY, JSON.stringify(ids))
-}
 
 async function load(targetPage = 1) {
   if (targetPage === 1) loading.value = true
@@ -51,15 +36,7 @@ async function load(targetPage = 1) {
   }
 }
 
-function handleLike(note: Note) {
-  if (likedIds.value.includes(note.id)) return
-  note.likes += 1
-  likedIds.value = [...likedIds.value, note.id]
-  persistLiked(likedIds.value)
-}
-
 onMounted(() => {
-  likedIds.value = readLiked()
   void load(1)
 })
 </script>
@@ -83,7 +60,7 @@ onMounted(() => {
 
     <template v-else>
       <ol class="notes-stream space-y-4" data-testid="notes-stream">
-        <NoteCard v-for="note in notes" :key="note.id" :note="note" :liked="likedIds.includes(note.id)" @like="handleLike(note)" />
+        <NoteCard v-for="note in notes" :key="note.id" :note="note" />
       </ol>
 
       <div v-if="hasMore" class="mt-8 flex justify-center">

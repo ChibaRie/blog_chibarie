@@ -47,7 +47,6 @@ interface NoteMeta {
   id?: number | string
   date: string
   images?: string[]
-  likes?: number
   draft?: boolean
 }
 
@@ -303,7 +302,6 @@ export function generateContent(inputBase = process.env.VITE_BASE || '/'): void 
         id,
         content: entry.body.trim(),
         images: images.map((image) => withBase(image, base)),
-        likes: Number(data.likes) || 0,
         status: 'published',
         publishedAt: date || null,
         createdAt: date,

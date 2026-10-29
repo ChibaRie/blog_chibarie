@@ -47,8 +47,6 @@ try {
   await first.getByRole('button', { name: '收起说说', exact: false }).click()
   await settle(first)
   check((await first.boundingBox()).width === 880, 'Note collapses back')
-  await first.getByTestId('note-like').click()
-  check(await first.getByTestId('note-like').isDisabled(), 'Note likes still work')
 
   await page.getByRole('button', { name: '打开外观设置', exact: true }).click()
   check(await page.getByRole('slider', { name: '页脚', exact: true }).inputValue() === '0', 'Footer defaults to 0%')

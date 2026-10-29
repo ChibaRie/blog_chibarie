@@ -57,7 +57,6 @@ export interface Note {
   id: number
   content: string
   images: string[]
-  likes: number
   status: PostStatus
   publishedAt: string | null
   createdAt: string

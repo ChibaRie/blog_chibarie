@@ -2,12 +2,11 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import type { Note } from '@/api'
 import { useSite } from '@/composables/useSite'
-import { formatDate, formatNumber, formatRelative } from '@/utils/format'
+import { formatDate, formatRelative } from '@/utils/format'
 import { useImageViewer } from '@/composables/useImageViewer'
 
-const props = defineProps<{ note: Note; liked: boolean }>()
+const props = defineProps<{ note: Note }>()
 const { open: openImageViewer } = useImageViewer()
-defineEmits<{ like: [] }>()
 const { siteInfo } = useSite()
 const avatar = computed(() => siteInfo.value?.site.avatar || '')
 const siteName = computed(() => siteInfo.value?.site.name || 'chibarie')
@@ -101,13 +100,6 @@ onUnmounted(() => { revision++; observer?.disconnect(); resizeAnimation?.cancel(
           </button>
         </div>
         <div class="mt-3.5 flex items-center gap-4">
-          <button class="inline-flex items-center gap-1.5 text-[12px] transition-colors" data-testid="note-like"
-            :class="liked ? 'text-sakura-300' : 'text-mist-500 hover:text-sakura-200'"
-            :aria-label="liked ? '已点赞' : '点赞'" :disabled="liked" @click="$emit('like')">
-            <svg width="14" height="14" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <path d="M12 20.5C7 16.6 3 13.3 3 9.6 3 6.9 5.1 5 7.6 5c1.7 0 3.3.9 4.4 2.4C13.1 5.9 14.7 5 16.4 5 18.9 5 21 6.9 21 9.6c0 3.7-4 7-9 10.9z" />
-            </svg>{{ formatNumber(note.likes) }}
-          </button>
           <time class="ml-auto hidden text-[12px] text-mist-600 sm:block" :datetime="date">{{ formatDate(date, true) }}</time>
         </div>
         <button v-if="expandable" type="button" class="note-expansion" :aria-expanded="expanded"

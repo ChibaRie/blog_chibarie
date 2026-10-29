@@ -79,31 +79,6 @@ check('配图正常渲染', imageCount > 0, `count=${imageCount}`)
 
 await page.screenshot({ path: resolve(OUT_DIR, 'notes-dark.png'), fullPage: true })
 
-console.log('\n== 点赞 ==')
-const likeBtn = page.locator('[data-testid="note-item"]').first().locator('[data-testid="note-like"]')
-const likeBefore = await likeBtn.innerText()
-await likeBtn.click()
-await page.waitForTimeout(700)
-const likeAfter = await likeBtn.innerText()
-check('点赞后数字变化', likeBefore.trim() !== likeAfter.trim(), `${likeBefore} → ${likeAfter}`)
-
-const likedDisabled = await page
-  .locator('[data-testid="note-item"]')
-  .first()
-  .locator('[data-testid="note-like"][aria-label="已点赞"]')
-  .count()
-check('点赞后变为已点赞态', likedDisabled === 1)
-
-// 刷新后仍然是已点赞（localStorage 持久化）
-await page.reload({ waitUntil: 'networkidle' })
-await page.waitForTimeout(500)
-const stillLiked = await page
-  .locator('[data-testid="note-item"]')
-  .first()
-  .locator('[data-testid="note-like"][aria-label="已点赞"]')
-  .count()
-check('刷新后点赞状态保留', stillLiked === 1)
-
 console.log('\n== 评论已移除 ==')
 check('没有评论切换按钮', (await page.locator('[data-testid="note-comment-toggle"]').count()) === 0)
 
