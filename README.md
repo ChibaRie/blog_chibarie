@@ -2,9 +2,7 @@
 
 <https://chibarie.github.io/blog_chibarie/>
 
-vue3 ts vite
-
-**叼你公龟. it s just a static page**
+**it s just a static page**
 
 文章放在 `content/posts/`
 
