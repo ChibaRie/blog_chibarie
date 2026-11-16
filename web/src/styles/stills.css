@@ -41,14 +41,14 @@
 }
 .stills-feature__no {
   font-family: var(--font-display);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   font-variant-numeric: tabular-nums;
 }
 .stills-feature__res {
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
   color: rgb(242 240 235 / 0.6);
@@ -76,8 +76,8 @@
 .stills-sort { display: flex; align-items: center; gap: 10px; }
 .stills-sort__label {
   font-family: var(--font-display);
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgb(var(--c-ink3));
 }
@@ -130,8 +130,8 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08em;
 }
-.stills-grid__no { font-size: 11px; font-weight: 600; color: rgb(var(--c-ink2)); }
-.stills-grid__res { font-size: 9.5px; color: rgb(var(--c-ink3)); }
+.stills-grid__no { font-size: 12px; font-weight: 600; color: rgb(var(--c-ink2)); }
+.stills-grid__res { font-size: 11px; color: rgb(var(--c-ink3)); }
 .stills-grid__cell:hover .stills-grid__no { color: rgb(var(--c-accent-text)); }
 @media (max-width: 680px) {
   .stills-grid__res { display: none; }

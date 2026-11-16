@@ -182,7 +182,7 @@ onUnmounted(() => {
           <input v-model="settings.motion" type="checkbox" role="switch" aria-label="界面动效">
           <span class="app-switch__track" aria-hidden="true" />
         </label>
-        <p class="text-[10.5px] leading-relaxed text-white/40">
+        <p class="text-[11px] leading-relaxed text-white/60">
           系统开启「减少动态效果」时，动效会自动关闭。
         </p>
       </div>

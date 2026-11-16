@@ -10,9 +10,9 @@
 }
 .page-head__en {
   font-family: var(--font-display);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgb(var(--c-accent-text));
 }
@@ -100,8 +100,8 @@
 }
 .profile__stat span {
   font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.2em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgb(var(--c-ink3));
 }
@@ -128,7 +128,7 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.dial__center span { font-family: var(--font-display); font-size: 8.5px; letter-spacing: 0.2em; color: rgb(var(--c-ink3)); text-transform: uppercase; }
+.dial__center span { font-family: var(--font-display); font-size: 10px; letter-spacing: 0.14em; color: rgb(var(--c-ink3)); text-transform: uppercase; }
 .dial__legend { display: grid; gap: 2px; }
 .dial__row {
   display: grid;
@@ -142,7 +142,7 @@
   transition: background-color var(--t-fast) var(--ease-ease), color var(--t-fast) var(--ease-ease);
 }
 .dial__row:hover { background: rgb(var(--c-accent)); color: rgb(var(--c-accent-ink)); }
-.dial__row i { font-style: normal; font-family: var(--font-display); font-size: 9.5px; letter-spacing: 0.08em; color: rgb(var(--c-ink4)); }
+.dial__row i { font-style: normal; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; color: rgb(var(--c-ink4)); }
 .dial__row:hover i { color: rgb(var(--c-accent-ink) / 0.6); }
 .dial__row b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: 13px; }
 
@@ -178,8 +178,8 @@
 .logrow__no {
   margin-top: 7px;
   font-family: var(--font-display);
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   color: rgb(var(--c-ink4));
 }
 .logrow__body { display: grid; gap: 14px; min-width: 0; }
@@ -302,8 +302,8 @@
 .year-block__side:hover .year-block__num span { clip-path: inset(0 0 0 0); }
 .year-block__count {
   font-family: var(--font-display);
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgb(var(--c-ink3));
 }
@@ -335,7 +335,7 @@
 .index-row[aria-pressed='true'] { background: rgb(var(--c-accent)); color: rgb(var(--c-accent-ink)); }
 .index-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgb(var(--c-accent)); }
 .index-row[aria-pressed='true']:focus-visible { box-shadow: inset 0 0 0 2px rgb(var(--c-accent-ink)); }
-.index-row__no { font-family: var(--font-display); font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; color: rgb(var(--c-ink4)); }
+.index-row__no { font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: rgb(var(--c-ink4)); }
 .index-row[aria-pressed='true'] .index-row__no { color: rgb(var(--c-accent-ink) / 0.55); }
 .index-row__name { font-size: 19px; font-weight: 700; letter-spacing: 0.02em; line-height: 1.3; }
 .index-row__desc { font-size: 12.5px; line-height: 1.65; color: rgb(var(--c-ink3)); }
@@ -430,8 +430,8 @@
   top: 50%;
   translate: 0 -50%;
   font-family: var(--font-display);
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
+  font-size: 11px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgb(var(--c-ink4));
 }
