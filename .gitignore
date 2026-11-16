@@ -29,6 +29,7 @@ Thumbs.db
 # 本地状态 / 私有记忆 / 旧后端产物
 .workbuddy/
 .playwright-mcp/
+.impeccable/
 AGENTS.md
 deploy/
 admin/
