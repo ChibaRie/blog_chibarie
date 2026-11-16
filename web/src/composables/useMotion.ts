@@ -1,11 +1,37 @@
-/** 系统减少动态效果 + 站点外观开关，任何脚本动效都先问这里。 */
+/**
+ * 动效偏好：站内开关 + 系统「减少动态效果」。
+ *
+ * 之前这里只提供一次性判断，环境动效在挂载/启动后就不再读偏好；
+ * 现在改成响应式状态，HomeView / HeroDust 监听它，关掉时真的停。
+ */
+import { computed, readonly, ref } from 'vue'
+import { useAppearance } from './useAppearance'
+
+const mediaQuery =
+  typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
+
+const systemReduced = ref(mediaQuery?.matches ?? false)
+mediaQuery?.addEventListener('change', (event) => {
+  systemReduced.value = event.matches
+})
+
+const { settings } = useAppearance()
+const allowed = computed(() => settings.motion && !systemReduced.value)
+
 export function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return systemReduced.value
 }
 
 export function motionAllowed(): boolean {
-  if (prefersReducedMotion()) return false
-  return document.documentElement.getAttribute('data-motion') !== 'off'
+  return allowed.value
+}
+
+/** 消费方监听 motionEnabled，即可在开关/系统偏好变化时停止或恢复动效。 */
+export function useMotion() {
+  return {
+    motionEnabled: readonly(allowed),
+    systemReduced: readonly(systemReduced),
+  }
 }
 
 /** 数字落定：把每一位在 0-9 之间滚动后锁定，只在允许动效时执行。 */

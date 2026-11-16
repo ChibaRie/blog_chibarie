@@ -3,10 +3,12 @@
  * 首屏光尘：只做氛围，不承载信息。
  * 30fps 上限、DPR ≤ 1.5、页面隐藏时暂停；系统减少动效时画一帧静态图。
  */
-import { onMounted, onUnmounted, ref } from 'vue'
-import { motionAllowed } from '@/composables/useMotion'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { useMotion } from '@/composables/useMotion'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const { motionEnabled } = useMotion()
+const inView = ref(true)
 
 interface Mote {
   x: number
@@ -26,6 +28,7 @@ let width = 0
 let height = 0
 let running = false
 let observer: ResizeObserver | undefined
+let viewObserver: IntersectionObserver | undefined
 
 function spawn(anywhere = false): Mote {
   return {
@@ -81,7 +84,7 @@ function tick(now: number) {
 }
 
 function start() {
-  if (running || !motionAllowed()) return
+  if (running || !motionEnabled.value || !inView.value || document.hidden) return
   running = true
   lastFrame = 0
   frame = requestAnimationFrame(tick)
@@ -97,6 +100,11 @@ function handleVisibility() {
   else start()
 }
 
+watch([motionEnabled, inView], () => {
+  if (motionEnabled.value && inView.value) start()
+  else stop()
+})
+
 onMounted(() => {
   sizeCanvas()
   paint()
@@ -105,13 +113,23 @@ onMounted(() => {
     sizeCanvas()
     paint()
   })
-  if (canvasRef.value) observer.observe(canvasRef.value)
+  if (canvasRef.value) {
+    observer.observe(canvasRef.value)
+    viewObserver = new IntersectionObserver(
+      (entries) => {
+        inView.value = entries.some((entry) => entry.isIntersecting)
+      },
+      { threshold: 0.05 },
+    )
+    viewObserver.observe(canvasRef.value)
+  }
   document.addEventListener('visibilitychange', handleVisibility)
 })
 
 onUnmounted(() => {
   stop()
   observer?.disconnect()
+  viewObserver?.disconnect()
   document.removeEventListener('visibilitychange', handleVisibility)
   motes = []
   ctx = null

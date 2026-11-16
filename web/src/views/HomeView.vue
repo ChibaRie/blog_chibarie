@@ -19,7 +19,7 @@ import RecordRow from '@/components/RecordRow.vue'
 import SettleNumber from '@/components/SettleNumber.vue'
 import SocialLinks from '@/components/SocialLinks.vue'
 import { useImageViewer } from '@/composables/useImageViewer'
-import { motionAllowed } from '@/composables/useMotion'
+import { useMotion } from '@/composables/useMotion'
 import { useSite } from '@/composables/useSite'
 import { withBase } from '@/utils/asset'
 import { formatBytes, formatIndex } from '@/utils/format'
@@ -27,6 +27,7 @@ import { plateAlt, toPreview } from '@/utils/gallery'
 
 const { siteInfo } = useSite()
 const { open: openViewer } = useImageViewer()
+const { motionEnabled } = useMotion()
 
 const posts = ref<Post[]>([])
 const notes = ref<Note[]>([])
@@ -40,7 +41,12 @@ const error = ref('')
 const HERO_INTERVAL = 7000
 const heroIndex = ref(0)
 const heroPaused = ref(false)
+const userPaused = ref(false)
+const heroVisible = ref(true)
+const heroEl = ref<HTMLElement | null>(null)
+const loadedFrames = ref<Set<number>>(new Set())
 let heroTimer: ReturnType<typeof setInterval> | undefined
+let heroObserver: IntersectionObserver | null = null
 let seeded = false
 
 interface HeroFrame {
@@ -70,16 +76,19 @@ const frames = computed<HeroFrame[]>(() => {
 })
 
 const currentFrame = computed(() => frames.value[heroIndex.value] || null)
-const artSources = computed(() =>
-  frames.value.map((frame, index) => {
-    const length = frames.value.length
+// 当前张与相邻张先加载；跳转时把正在淡出的那张保留住，
+// 否则旧帧的 background 被清空、透明度还在，会先闪一块黑。
+const artSources = computed(() => {
+  const length = frames.value.length
+  return frames.value.map((frame, index) => {
+    if (loadedFrames.value.has(index)) return frame.src
     const distance = Math.min(
       Math.abs(index - heroIndex.value),
       length - Math.abs(index - heroIndex.value),
     )
     return distance <= 1 ? frame.src : ''
-  }),
-)
+  })
+})
 const heroReady = computed(() => frames.value.length > 0)
 
 const description = computed(() => siteInfo.value?.site.description || '')
@@ -137,9 +146,14 @@ function goTo(index: number) {
 function restartTimer() {
   if (heroTimer) clearInterval(heroTimer)
   heroTimer = undefined
-  if (frames.value.length < 2 || heroPaused.value || document.hidden) return
-  if (!motionAllowed()) return
+  if (!motionEnabled.value) return
+  if (frames.value.length < 2) return
+  if (heroPaused.value || userPaused.value || document.hidden || !heroVisible.value) return
   heroTimer = setInterval(nextHero, HERO_INTERVAL)
+}
+
+function toggleUserPause() {
+  userPaused.value = !userPaused.value
 }
 
 function openCurrent() {
@@ -203,6 +217,7 @@ async function load() {
 watch(
   frames,
   (list) => {
+    loadedFrames.value = new Set()
     if (!seeded && list.length > 1) {
       heroIndex.value = Math.floor(Math.random() * list.length)
       seeded = true
@@ -212,15 +227,32 @@ watch(
   { immediate: true },
 )
 
-watch(heroPaused, restartTimer)
+watch(heroIndex, (_next, previous) => {
+  if (typeof previous !== 'number') return
+  const next = new Set(loadedFrames.value)
+  next.add(previous)
+  loadedFrames.value = next
+})
+
+watch([heroPaused, userPaused, heroVisible, motionEnabled], restartTimer)
 
 onMounted(() => {
   void load()
   document.addEventListener('visibilitychange', handleVisibility)
+  if (heroEl.value) {
+    heroObserver = new IntersectionObserver(
+      (entries) => {
+        heroVisible.value = entries.some((entry) => entry.isIntersecting)
+      },
+      { threshold: 0.05 },
+    )
+    heroObserver.observe(heroEl.value)
+  }
 })
 
 onUnmounted(() => {
   if (heroTimer) clearInterval(heroTimer)
+  heroObserver?.disconnect()
   document.removeEventListener('visibilitychange', handleVisibility)
 })
 </script>
@@ -228,6 +260,7 @@ onUnmounted(() => {
 <template>
   <div>
     <section
+      ref="heroEl"
       class="hero"
       @mouseenter="heroPaused = true"
       @mouseleave="heroPaused = false"
@@ -285,6 +318,21 @@ onUnmounted(() => {
           </div>
 
           <div class="hero__ctrl">
+            <button
+              type="button"
+              class="hero__btn"
+              :aria-label="userPaused ? '继续自动切换图版' : '暂停自动切换图版'"
+              :title="motionEnabled ? (userPaused ? '继续自动切换图版' : '暂停自动切换图版') : '界面动效已关闭'"
+              :disabled="frames.length < 2 || !motionEnabled"
+              @click="toggleUserPause"
+            >
+              <svg v-if="userPaused" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 5.5 19 12 8 18.5z" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M9 5v14M15 5v14" />
+              </svg>
+            </button>
             <button
               type="button"
               class="hero__btn"
