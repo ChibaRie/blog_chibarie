@@ -14,6 +14,7 @@ import type {
   ArchiveItem,
   Category,
   FriendLink,
+  GalleryItem,
   Note,
   Post,
   SiteInfo,
@@ -323,6 +324,32 @@ export function generateContent(inputBase = process.env.VITE_BASE || '/'): void 
 
   const aboutHtml = withBaseHtml(renderMarkdown(aboutSource).html, base)
 
+  // 图库：所有数值来自 gallery-build.py 写入的清单（真实尺寸、体积、平均色）
+  const galleryRaw = readJson<Record<string, unknown>[]>(join(CONTENT_DIR, 'gallery.json'), [])
+  const gallery: GalleryItem[] = galleryRaw
+    .map((item, index) => {
+      const orientation = String(item.orientation || '')
+      return {
+        no: Number(item.no) || index + 1,
+        source: String(item.source || ''),
+        thumb: withBase(String(item.thumb || ''), base),
+        src: withBase(String(item.src || ''), base),
+        hero: withBase(String(item.hero || ''), base),
+        width: Number(item.width) || 0,
+        height: Number(item.height) || 0,
+        bytes: Number(item.bytes) || 0,
+        thumbBytes: Number(item.thumbBytes) || 0,
+        avg: String(item.avg || ''),
+        orientation: (orientation === 'portrait' || orientation === 'square'
+          ? orientation
+          : 'landscape') as GalleryItem['orientation'],
+        title: String(item.title || ''),
+        note: String(item.note || ''),
+        collectedAt: String(item.collectedAt || ''),
+      }
+    })
+    .sort((a, b) => a.no - b.no)
+
   const heroBackgrounds = Array.isArray(siteRaw.heroBackgrounds)
     ? siteRaw.heroBackgrounds.map((item) => withBase(String(item), base))
     : []
@@ -339,6 +366,8 @@ export function generateContent(inputBase = process.env.VITE_BASE || '/'): void 
     pageBackground: withBase(String(siteRaw.pageBackground || ''), base),
     aboutContent: aboutSource,
     aboutHtml,
+    heroPlates: gallery.filter((item) => item.hero),
+    buildAt: new Date().toISOString(),
     socials: {
       bilibili: String((siteRaw.socials as Record<string, string> | undefined)?.bilibili || ''),
       github: String((siteRaw.socials as Record<string, string> | undefined)?.github || ''),
@@ -359,12 +388,15 @@ export function generateContent(inputBase = process.env.VITE_BASE || '/'): void 
         wordCount: posts.reduce((total, post) => total + post.wordCount, 0),
       views: 0,
       likes: 0,
+      galleryCount: gallery.length,
+      galleryBytes: gallery.reduce((sum, item) => sum + item.bytes, 0),
     },
     posts,
     categories,
     tags,
     notes,
     links,
+    gallery,
     archive: posts.map<ArchiveItem>((post) => ({
       id: post.id,
       title: post.title,
@@ -389,7 +421,7 @@ export function generateContent(inputBase = process.env.VITE_BASE || '/'): void 
 
   console.log(
     `[content] base=${base} posts=${posts.length} notes=${notes.length} ` +
-      `tags=${tags.length} categories=${categories.length}`,
+      `tags=${tags.length} categories=${categories.length} gallery=${gallery.length}`,
   )
 }
 

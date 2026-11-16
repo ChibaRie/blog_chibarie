@@ -4,143 +4,98 @@ import { fetchLinks, type FriendLink } from '@/api'
 
 const links = ref<FriendLink[]>([])
 const loading = ref(true)
+const error = ref('')
+
+const decorated = computed(() =>
+  links.value.map((link) => ({
+    ...link,
+    initial: link.name.trim().charAt(0).toUpperCase() || '·',
+    prettyUrl: link.url.replace(/^https?:\/\//, '').replace(/\/$/, ''),
+  })),
+)
 
 onMounted(async () => {
   try {
     links.value = await fetchLinks()
   } catch (err) {
-    console.error('[links] 加载友链失败', err)
+    error.value = err instanceof Error ? err.message : '友链加载失败'
   } finally {
     loading.value = false
   }
 })
-
-// 头像没配的用「首字 + 渐变」占位，不依赖第三方 favicon 服务
-const gradients = [
-  'from-sakura-400/70 to-cosmos-400/70',
-  'from-cosmos-400/70 to-sakura-500/70',
-  'from-sakura-500/60 to-cosmos-600/70',
-  'from-cosmos-500/60 to-sakura-400/70',
-]
-
-const decorated = computed(() =>
-  links.value.map((link, index) => ({
-    ...link,
-    initial: link.name.trim().charAt(0).toUpperCase() || '☆',
-    gradient: gradients[index % gradients.length],
-    // 展示时去掉协议头，短一点、也避免暴露 https/http 细节
-    prettyUrl: link.url.replace(/^https?:\/\//, '').replace(/\/$/, ''),
-  })),
-)
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-4 py-14 sm:px-6">
-    <header class="animate-fadeUp">
-      <h1 class="text-3xl font-medium tracking-wide text-mist-100 sm:text-4xl">
-        友链
-      </h1>
-      <p class="mt-4 max-w-2xl text-sm leading-relaxed text-mist-400 sm:text-base">
-        常逛的博客和朋友的站点。想交换友链的话，在
+  <div class="shell">
+    <header class="page-head">
+      <span class="page-head__en">// Links · Elsewhere</span>
+      <h1 class="page-head__title">友链</h1>
+      <p class="page-head__sub">
+        常逛的博客和朋友的站点。想交换友链，在
         <a
           href="https://github.com/ChibaRie/blog_chibarie/issues"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-sakura-300 underline decoration-sakura-400/40 underline-offset-4 transition-colors hover:text-sakura-200"
-        >
-          GitHub Issues
-        </a>
-        留下你的站名、地址和介绍就行。我会填上去的。
+          class="text-accentText underline decoration-accent decoration-2 underline-offset-4"
+        >GitHub Issues</a>
+        留下站名、地址和一句介绍即可。
       </p>
+      <div v-if="decorated.length" class="page-head__fields">
+        <span class="arc-field">
+          <span>{{ decorated.length }} 个站点</span>
+          <span>排名不分先后</span>
+        </span>
+      </div>
     </header>
 
-    <div
-      v-if="loading"
-      class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2"
-      aria-hidden="true"
-    >
-      <div v-for="i in 4" :key="i" class="glass-card h-24 animate-pulse" />
+    <div v-if="loading" aria-hidden="true">
+      <div v-for="i in 4" :key="i" class="skeleton skeleton--row" />
     </div>
 
-    <div
-      v-else-if="decorated.length"
-      class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2"
-    >
+    <div v-else-if="error" class="arc-empty">
+      <span class="arc-empty__en">// Offline</span>
+      <p>{{ error }}。请刷新页面重试。</p>
+    </div>
+
+    <div v-else-if="decorated.length === 0" class="arc-empty">
+      <span class="arc-empty__en">// Empty</span>
+      <p>这里还没有友链。带上站名、地址和介绍来 Issues 找我。</p>
+    </div>
+
+    <div v-else class="links-list">
       <a
         v-for="link in decorated"
         :key="link.id"
         :href="link.url"
         target="_blank"
-        rel="noopener"
-        class="glass-card glass-card-hover group flex items-center gap-4 rounded-2xl p-5"
+        rel="noopener noreferrer"
+        class="linkrow"
       >
-        <img
-          v-if="link.avatar"
-          :src="link.avatar"
-          :alt="`${link.name} 的头像`"
-          class="h-14 w-14 shrink-0 rounded-full border border-mist-400/15 object-cover"
-          loading="lazy"
-        />
-        <span
-          v-else
-          class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-lg font-medium text-white/90"
-          :class="link.gradient"
-          aria-hidden="true"
-        >
-          {{ link.initial }}
+        <span class="linkrow__avatar">
+          <img v-if="link.avatar" :src="link.avatar" :alt="`${link.name} 的头像`" loading="lazy">
+          <span v-else class="linkrow__initial" aria-hidden="true">{{ link.initial }}</span>
         </span>
-
-        <span class="min-w-0 flex-1">
-          <span class="flex items-center gap-1.5">
-            <span class="truncate text-base font-medium text-mist-100 transition-colors group-hover:text-sakura-200">
-              {{ link.name }}
-            </span>
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="shrink-0 text-mist-500 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-sakura-300"
-              aria-hidden="true"
-            >
-              <path d="M7 17 L17 7 M9 7 h8 v8" />
+        <span class="linkrow__body">
+          <span class="linkrow__name">
+            {{ link.name }}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17 17 7M9 7h8v8" />
             </svg>
           </span>
-          <span
-            v-if="link.description"
-            class="mt-1 line-clamp-2 block text-[13px] leading-relaxed text-mist-400"
-          >
-            {{ link.description }}
-          </span>
-          <span class="mt-1 block truncate text-xs text-mist-600">
-            {{ link.prettyUrl }}
-          </span>
+          <span v-if="link.description" class="linkrow__desc">{{ link.description }}</span>
         </span>
+        <span class="linkrow__url">{{ link.prettyUrl }}</span>
       </a>
     </div>
 
-    <div v-else class="glass-card mt-10 rounded-2xl px-6 py-14 text-center">
-      <p class="text-sm text-mist-400">这里还没有友链。</p>
-      <p class="mt-2 text-xs text-mist-600">
-        想交换友链？去
-        <a
-          href="https://github.com/ChibaRie/blog_chibarie/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-sakura-300 hover:text-sakura-200"
-        >
-          GitHub Issues
-        </a>
-        留下站名、地址和介绍就行，我会填上去的。
-      </p>
-    </div>
-
-    <p class="mt-10 text-center text-xs text-mist-600">
-      共 {{ decorated.length }} 个站点 · 排名不分先后
+    <p class="stills-note">
+      <span>链接直达站外，站点内容与这里无关。</span>
+      <a
+        href="https://github.com/ChibaRie/blog_chibarie/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="arc-head__more"
+      >提交友链 →</a>
     </p>
   </div>
 </template>

@@ -1,51 +1,27 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import BackdropLayer from '@/components/BackdropLayer.vue'
-import FallingPetals from '@/components/FallingPetals.vue'
-import PageLoader from '@/components/PageLoader.vue'
+import { RouterView, useRoute } from 'vue-router'
 import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import AppearancePanel from '@/components/AppearancePanel.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
-import { useAppearance } from '@/composables/useAppearance'
 
-const { settings } = useAppearance()
+const route = useRoute()
 </script>
 
 <template>
-  <div class="relative min-h-screen">
-    <BackdropLayer />
-    <FallingPetals :enabled="settings.showParticles" />
+  <a class="skip-link" href="#main">跳到正文</a>
 
-    <div class="relative z-10 flex min-h-screen flex-col">
-      <SiteHeader />
-      <main class="flex-1">
-        <RouterView v-slot="{ Component }">
-          <Transition name="page" mode="out-in">
-            <component :is="Component" />
-          </Transition>
-        </RouterView>
-      </main>
-      <SiteFooter />
-    </div>
+  <SiteHeader />
 
-    <PageLoader />
-    <AppearancePanel />
-    <ImageViewer />
-  </div>
+  <main id="main" tabindex="-1" class="scroll-mt-24">
+    <RouterView v-slot="{ Component }">
+      <Transition name="shutter" mode="out-in">
+        <component :is="Component" :key="route.path" />
+      </Transition>
+    </RouterView>
+  </main>
+
+  <SiteFooter />
+  <AppearancePanel />
+  <ImageViewer />
 </template>
-
-<style scoped>
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
-}
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-</style>

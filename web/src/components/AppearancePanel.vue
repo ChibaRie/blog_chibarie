@@ -1,56 +1,71 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
-import { appearanceRanges, useAppearance } from '@/composables/useAppearance'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { accentPresets, appearanceRanges, useAppearance } from '@/composables/useAppearance'
+import { usePanels } from '@/composables/usePanels'
+import { useTheme } from '@/composables/useTheme'
 
 const { settings, reset } = useAppearance()
-const open = ref(false)
-const status = ref('')
-const toggleRef = ref<HTMLButtonElement | null>(null)
+const { appearanceOpen, closeAppearance } = usePanels()
+const { theme, set: setTheme } = useTheme()
+
 const panelRef = ref<HTMLElement | null>(null)
 const closeRef = ref<HTMLButtonElement | null>(null)
-type NumberKey = keyof typeof appearanceRanges
-interface Control { key: NumberKey; label: string; unit?: string; step?: number }
-const groups: { id: string; title: string; controls: Control[] }[] = [
-  { id: 'background', title: '背景', controls: [
-    { key: 'brightness', label: '背景亮度' }, { key: 'veil', label: '背景遮罩' },
-    { key: 'blur', label: '背景模糊', unit: 'px' },
-  ] },
-  { id: 'particles', title: '粒子效果', controls: [{ key: 'particleOpacity', label: '粒子浓淡' }] },
-  { id: 'color', title: '主题强调色', controls: [] },
-  { id: 'opacity', title: '框体不透明度', controls: [
-    { key: 'cardOpacity', label: '内容卡片' }, { key: 'sidebarOpacity', label: '右侧栏卡片' },
-    { key: 'navOpacity', label: '滚动后的导航栏' }, { key: 'footerOpacity', label: '页脚' },
-  ] },
-  { id: 'edges', title: '圆角与描边', controls: [
-    { key: 'radius', label: '卡片圆角', unit: 'px' },
-    { key: 'borderWidth', label: '描边粗细', unit: 'px', step: .5 },
-    { key: 'borderOpacity', label: '描边明显度' },
-  ] },
+const status = ref('')
+let restoreFocus: HTMLElement | null = null
+
+type RangeKey = 'artBrightness' | 'artVeil' | 'artBlur' | 'bodyScale'
+
+const ranges: { key: RangeKey; label: string; unit: string }[] = [
+  { key: 'artBrightness', label: '头图亮度', unit: '%' },
+  { key: 'artVeil', label: '头图遮罩', unit: '%' },
+  { key: 'artBlur', label: '头图模糊', unit: 'px' },
+  { key: 'bodyScale', label: '正文字号', unit: '%' },
 ]
-const presets = [
-  { name: '樱粉', color: '#de94b8' }, { name: '晴蓝', color: '#8fb6f5' },
-  { name: '雾紫', color: '#b5a0e2' }, { name: '薄荷', color: '#84c7b4' },
-]
-function setNumber(key: NumberKey, event: Event) {
-  settings[key] = Number((event.target as HTMLInputElement).value)
+
+function onRangeInput(key: RangeKey, event: Event) {
+  const value = Number((event.target as HTMLInputElement).value)
+  if (Number.isFinite(value)) settings[key] = value
 }
-async function setOpen(value: boolean) {
-  open.value = value
-  await nextTick()
-  ;(value ? closeRef.value : toggleRef.value)?.focus({ preventScroll: true })
+
+function restore() {
+  reset()
+  status.value = '已恢复默认外观。'
 }
+
 function handleOutside(event: PointerEvent) {
-  const target = event.target as Node
-  if (open.value && !panelRef.value?.contains(target) && !toggleRef.value?.contains(target)) void setOpen(false)
+  if (!appearanceOpen.value) return
+  const target = event.target
+  if (!(target instanceof Node)) return
+  if (panelRef.value?.contains(target)) return
+  if (target instanceof Element && target.closest('[aria-controls="appearance-panel"]')) return
+  closeAppearance()
 }
+
 function handleKey(event: KeyboardEvent) {
-  if (event.key === 'Escape' && open.value) { event.preventDefault(); void setOpen(false) }
+  if (event.key === 'Escape' && appearanceOpen.value) {
+    event.preventDefault()
+    closeAppearance()
+  }
 }
-function restore() { reset(); status.value = '已恢复默认外观。' }
+
+watch(appearanceOpen, async (open) => {
+  if (open) {
+    restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    await nextTick()
+    closeRef.value?.focus({ preventScroll: true })
+    return
+  }
+  status.value = ''
+  const target = restoreFocus
+  restoreFocus = null
+  if (target?.isConnected) target.focus({ preventScroll: true })
+})
+
 onMounted(() => {
   document.addEventListener('pointerdown', handleOutside)
   document.addEventListener('keydown', handleKey)
 })
+
 onUnmounted(() => {
   document.removeEventListener('pointerdown', handleOutside)
   document.removeEventListener('keydown', handleKey)
@@ -58,54 +73,125 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <button ref="toggleRef" class="appearance-toggle" type="button"
-    :aria-label="open ? '关闭外观设置' : '打开外观设置'" aria-controls="appearance-panel"
-    :aria-expanded="open" title="外观设置" @click="setOpen(!open)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path v-if="open" d="m6 6 12 12M6 18 18 6" />
-      <template v-else><path d="M4 7h7m6 0h3M4 17h3m6 0h7" /><circle cx="14" cy="7" r="3" /><circle cx="10" cy="17" r="3" /></template>
-    </svg>
-  </button>
-  <section v-show="open" id="appearance-panel" ref="panelRef" class="appearance-panel"
-    role="dialog" aria-labelledby="appearance-title" @wheel.stop.passive>
-    <header class="appearance-panel-header">
-      <div><h2 id="appearance-title">外观设置</h2><p>调成你喜欢的样子</p></div>
-      <button ref="closeRef" type="button" class="appearance-close" aria-label="关闭外观设置" @click="setOpen(false)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" /></svg>
+  <section
+    v-if="appearanceOpen"
+    id="appearance-panel"
+    ref="panelRef"
+    class="app-panel"
+    data-open="true"
+    role="dialog"
+    aria-labelledby="appearance-title"
+    @wheel.stop.passive
+  >
+    <header class="app-panel__head">
+      <div class="app-panel__title">
+        <b>// APPEARANCE</b>
+        <h2 id="appearance-title">外观</h2>
+      </div>
+      <button ref="closeRef" type="button" class="app-close" aria-label="关闭外观设置" @click="closeAppearance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+          <path d="m6 6 12 12M6 18 18 6" />
+        </svg>
       </button>
     </header>
-    <div class="appearance-body">
-      <section v-for="group in groups" :key="group.id" class="appearance-group" :aria-labelledby="`appearance-${group.id}-title`">
-        <h3 :id="`appearance-${group.id}-title`">{{ group.title }}</h3>
-        <label v-if="group.id === 'particles'" class="appearance-switch">
-          <span>显示花瓣与星点</span><input v-model="settings.showParticles" type="checkbox" role="switch" aria-label="显示花瓣与星点">
+
+    <div class="app-panel__body">
+      <div class="app-group">
+        <h3 class="app-group__title"><span>主题</span><b>THEME</b></h3>
+        <div class="app-seg">
+          <button type="button" :aria-pressed="theme === 'night'" @click="setTheme('night')">
+            夜航<small>NIGHT</small>
+          </button>
+          <button type="button" :aria-pressed="theme === 'paper'" @click="setTheme('paper')">
+            纸白<small>PAPER</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="app-group">
+        <h3 class="app-group__title"><span>强调色</span><b>SIGNAL</b></h3>
+        <div class="app-swatches">
+          <button
+            v-for="preset in accentPresets"
+            :key="preset.value"
+            type="button"
+            class="app-swatch"
+            :style="{ '--swatch': preset.value }"
+            :aria-label="`${preset.name}强调色`"
+            :aria-pressed="settings.accent.toLowerCase() === preset.value"
+            @click="settings.accent = preset.value"
+          />
+          <label class="app-custom" title="自定义强调色">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m14 5 5 5M4 20l4-1 12-12a2.8 2.8 0 0 0-4-4L4 15Z" />
+            </svg>
+            <input
+              v-model="settings.accent"
+              type="color"
+              aria-label="自定义强调色"
+            />
+          </label>
+        </div>
+        <p class="flex items-center justify-between text-[10px] tracking-[0.1em] text-white/40">
+          <span>填充上的字会自动取对比度更高的颜色</span>
+          <output class="font-mono text-white/60">{{ settings.accent.toUpperCase() }}</output>
+        </p>
+      </div>
+
+      <div class="app-group">
+        <h3 class="app-group__title"><span>首页头图</span><b>ARTWORK</b></h3>
+        <label
+          v-for="item in ranges.slice(0, 3)"
+          :key="item.key"
+          class="app-range"
+        >
+          <span class="app-range__row">
+            <span>{{ item.label }}</span>
+            <output>{{ settings[item.key] }}{{ item.unit }}</output>
+          </span>
+          <input
+            type="range"
+            :min="appearanceRanges[item.key][0]"
+            :max="appearanceRanges[item.key][1]"
+            :value="settings[item.key]"
+            :aria-label="item.label"
+            @input="onRangeInput(item.key, $event)"
+          >
         </label>
-        <template v-if="group.id === 'color'">
-          <div class="appearance-presets">
-            <button v-for="preset in presets" :key="preset.color" type="button" class="appearance-swatch"
-              :style="{ '--swatch': preset.color }" :aria-label="`${preset.name}主题色`"
-              :aria-pressed="settings.accent === preset.color" @click="settings.accent = preset.color">
-              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 12 4 4 8-8" /></svg></span>
-            </button>
-            <label class="appearance-custom-color" title="自定义主题色">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5 5 5M4 20l4-1 12-12a2.8 2.8 0 0 0-4-4L4 15Z" /></svg>
-              <input v-model="settings.accent" type="color" aria-label="自定义主题色">
-            </label>
-          </div>
-          <p class="appearance-palette-caption"><span>预设配色 / 自定义</span><output>{{ settings.accent.toUpperCase() }}</output></p>
-        </template>
-        <label v-for="control in group.controls" :key="control.key" class="appearance-range">
-          <span class="appearance-label-row"><span>{{ control.label }}</span><output :for="`appearance-${control.key}`">{{ settings[control.key] }}{{ control.unit || '%' }}</output></span>
-          <input :id="`appearance-${control.key}`" type="range" :value="settings[control.key]"
-            :min="appearanceRanges[control.key][0]" :max="appearanceRanges[control.key][1]"
-            :step="control.step || 1" :aria-label="control.label"
-            :disabled="control.key === 'particleOpacity' && !settings.showParticles" @input="setNumber(control.key, $event)">
+      </div>
+
+      <div class="app-group">
+        <h3 class="app-group__title"><span>阅读</span><b>READING</b></h3>
+        <label class="app-range">
+          <span class="app-range__row">
+            <span>正文字号</span>
+            <output>{{ settings.bodyScale }}%</output>
+          </span>
+          <input
+            type="range"
+            :min="appearanceRanges.bodyScale[0]"
+            :max="appearanceRanges.bodyScale[1]"
+            step="1"
+            :value="settings.bodyScale"
+            aria-label="正文字号"
+            @input="onRangeInput('bodyScale', $event)"
+          >
         </label>
-      </section>
+        <label class="app-switch">
+          <span>界面动效</span>
+          <input v-model="settings.motion" type="checkbox" role="switch" aria-label="界面动效">
+          <span class="app-switch__track" aria-hidden="true" />
+        </label>
+        <p class="text-[10.5px] leading-relaxed text-white/40">
+          系统开启「减少动态效果」时，动效会自动关闭。
+        </p>
+      </div>
     </div>
-    <footer class="appearance-panel-footer"><span>仅保存在当前浏览器</span><button type="button" class="appearance-reset" @click="restore">恢复默认</button></footer>
-    <p class="appearance-status" role="status" aria-live="polite">{{ status }}</p>
+
+    <footer class="app-panel__foot">
+      <span>仅保存在当前浏览器</span>
+      <button type="button" class="app-reset" @click="restore">恢复默认</button>
+    </footer>
+    <p class="app-status" role="status" aria-live="polite">{{ status }}</p>
   </section>
 </template>
-
-<style src="../styles/appearance-panel.css"></style>

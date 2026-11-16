@@ -11,6 +11,8 @@ const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
 const targets = [
   { path: '/', name: 'home' },
+  { path: '/gallery', name: 'gallery' },
+  { path: '/notes', name: 'notes' },
   { path: '/archive', name: 'archive' },
   { path: '/categories', name: 'categories' },
   { path: '/tags', name: 'tags' },
@@ -18,7 +20,6 @@ const targets = [
   { path: '/about', name: 'about' },
   { path: '/search', name: 'search' },
   { path: '/post/comfyui-local-diffusion-control', name: 'post' },
-  { path: '/post/go-concurrency-basics', name: 'post-go' },
   { path: '/no-such-page', name: 'notfound' },
 ]
 

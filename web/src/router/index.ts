@@ -21,6 +21,12 @@ const router = createRouter({
       meta: { title: '说说' },
     },
     {
+      path: '/gallery',
+      name: 'gallery',
+      component: () => import('@/views/GalleryView.vue'),
+      meta: { title: '图库' },
+    },
+    {
       path: '/archive',
       name: 'archive',
       component: () => import('@/views/ArchiveView.vue'),
@@ -63,17 +69,18 @@ const router = createRouter({
       meta: { title: '页面不存在' },
     },
   ],
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
+    // 只改查询参数（筛选、展开大图）时不回到页首
+    if (to.path === from.path && to.path !== '/gallery') return false
     if (to.hash) return { el: to.hash, behavior: 'smooth' }
     return { top: 0 }
   },
 })
 
 router.afterEach((to) => {
-  const base = 'chibarie'
   const title = to.meta?.title as string | undefined
-  document.title = title ? `${title} · ${base}` : base
+  document.title = title ? `${title} · chibarie` : 'chibarie · ARCHIVE'
 })
 
 export default router

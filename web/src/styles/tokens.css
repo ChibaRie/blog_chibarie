@@ -1,0 +1,124 @@
+/* ==========================================================================
+   设计令牌 · 夜航档案 / FIELD ARCHIVE
+   --------------------------------------------------------------------------
+   色值写成 "R G B" 三段，Tailwind 用 rgb(var(--c-x) / <alpha-value>) 引用。
+   夜航（默认）是完整主题；纸白是另一套完整主题，不是简单反色。
+   强调色只有一个：它只代表「当前所在 / 可点击 / 需要看一眼」，只做填充，
+   填充上的字一律用 --c-accent-ink（深色）。纸白下强调色不写字、不画细线。
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* 表面：页面 / 面板 / 嵌套面 */
+  --c-paper: 10 10 12;
+  --c-paper2: 15 15 18;
+  --c-plate: 20 20 24;
+  --c-plate2: 29 29 34;
+
+  /* 文字：主 / 次 / 弱 / 仅装饰 */
+  --c-ink: 242 240 235;
+  --c-ink2: 203 201 195;
+  --c-ink3: 156 155 150;
+  --c-ink4: 128 127 122;
+
+  /* 线条：用 rgb(var(--c-line) / alpha) 调浓淡 */
+  --c-line: 255 255 255;
+
+  /* 单一强调色：填充用 accent；小字用 accent-text（纸白下压深保对比度） */
+  --c-accent: 255 111 165;
+  --c-accent-ink: 12 12 14;
+  --c-accent-text: 255 111 165;
+  --c-danger: 255 96 96;
+
+  /* 命令面（页头/页脚）两套主题都保持深色 */
+  --c-cmd: 9 9 11;
+  --c-cmd-ink: 240 238 233;
+  --c-cmd-line: 255 255 255;
+
+  /* 代码：代码块在两套主题里都用深色终端底 */
+  --c-code: 13 13 16;
+  --c-code-line: 255 255 255;
+  --hl-base: #e9e6df;
+  --hl-comment: #77757f;
+  --hl-keyword: #ff8fbc;
+  --hl-string: #9fd6c2;
+  --hl-number: #c9b6ff;
+  --hl-title: #ffd08a;
+  --hl-attr: #a8c6ff;
+  --hl-type: #d8d3c8;
+  --hl-meta: #9c99a4;
+  --hl-deletion: #ff7d7d;
+
+  /* 几何 */
+  --cut-sm: 6px;
+  --cut: 10px;
+  --cut-lg: 18px;
+  --hair: 1px;
+
+  /* 版式 */
+  --font-display: 'Saira', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-ui: 'Saira', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+
+  --page-max: 1400px;
+  --gutter: clamp(18px, 4vw, 56px);
+  --hdr: 64px;
+  --space-section: clamp(56px, 8vw, 112px);
+
+  /* 动效：短、硬、机械 */
+  --t-fast: 120ms;
+  --t-base: 200ms;
+  --t-slow: 420ms;
+  --t-enter: 620ms;
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-mech: cubic-bezier(0.7, 0, 0.2, 1);
+  --ease-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+
+  /* 外观设置（由 useAppearance 写入） */
+  --app-art-brightness: 1;
+  --app-art-veil: 0.32;
+  --app-art-blur: 0px;
+  --app-body-scale: 1;
+}
+
+html[data-theme='paper'] {
+  color-scheme: light;
+
+  --c-paper: 244 243 240;
+  --c-paper2: 237 236 232;
+  --c-plate: 255 255 255;
+  --c-plate2: 235 233 228;
+
+  --c-ink: 20 20 22;
+  --c-ink2: 58 57 54;
+  --c-ink3: 100 98 93;
+  --c-ink4: 110 108 102;
+
+  --c-line: 20 20 22;
+
+  /* 纸白下强调色填充仍用亮粉（上面写深色字）；小字用压深的粉保住对比度 */
+  --c-accent: 255 122 168;
+  --c-accent-ink: 20 20 22;
+  --c-accent-text: 190 34 96;
+  --c-danger: 190 40 40;
+
+  --c-code: 18 18 21;
+  --c-code-line: 255 255 255;
+}
+
+/* 关闭动效：外观面板的开关与系统「减少动态效果」共用同一个属性 */
+html[data-motion='off'] *,
+html[data-motion='off'] *::before,
+html[data-motion='off'] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

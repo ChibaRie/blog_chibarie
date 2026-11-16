@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useSite } from '@/composables/useSite'
 
-withDefaults(defineProps<{ size?: 'sm' | 'md' }>(), { size: 'sm' })
+withDefaults(defineProps<{ tone?: 'surface' | 'command' }>(), { tone: 'surface' })
 
 const { siteInfo } = useSite()
 const socials = computed(() => siteInfo.value?.site.socials)
@@ -26,59 +26,23 @@ const links = computed(() => {
     { key: 'steam', href: s.steam, label: 'Steam' },
   ].filter((item) => item.href)
 })
-
-const location = computed(() => socials.value?.location || '')
 </script>
 
 <template>
-  <div
-    v-if="links.length || location"
-    class="flex flex-wrap items-center justify-center gap-1.5"
-  >
+  <div v-if="links.length" class="flex flex-wrap items-center gap-2">
     <a
       v-for="link in links"
       :key="link.key"
       :href="link.href"
       target="_blank"
       rel="noopener noreferrer"
-      class="social-link"
-      :class="size === 'md' && 'h-8 w-8'"
+      :class="tone === 'command' ? 'cmd-foot__icon' : 'profile__social'"
       :aria-label="link.label"
       :title="link.label"
     >
-      <svg
-        :width="size === 'md' ? 17 : 15"
-        :height="size === 'md' ? 17 : 15"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path :d="ICON_PATHS[link.key]" />
       </svg>
     </a>
-
-    <span
-      v-if="location"
-      class="ml-1 inline-flex items-center gap-1 text-mist-500"
-      :class="size === 'md' ? 'text-xs' : 'text-[12px]'"
-    >
-      <svg
-        :width="size === 'md' ? 13 : 12"
-        :height="size === 'md' ? 13 : 12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path
-          d="M12 21s-6.5-5.4-6.5-10A6.5 6.5 0 0 1 12 4.5 6.5 6.5 0 0 1 18.5 11c0 4.6-6.5 10-6.5 10Z"
-        />
-        <circle cx="12" cy="11" r="2.4" />
-      </svg>
-      {{ location }}
-    </span>
   </div>
 </template>

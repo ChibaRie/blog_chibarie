@@ -63,6 +63,26 @@ export interface Note {
   updatedAt: string
 }
 
+export type GalleryOrientation = 'landscape' | 'portrait' | 'square'
+
+/** 图库的一张图：所有数值都来自文件本身，标题与备注可以由博主补充 */
+export interface GalleryItem {
+  no: number
+  source: string
+  thumb: string
+  src: string
+  hero: string
+  width: number
+  height: number
+  bytes: number
+  thumbBytes: number
+  avg: string
+  orientation: GalleryOrientation
+  title: string
+  note: string
+  collectedAt: string
+}
+
 export interface SiteInfo {
   site: {
     url: string
@@ -76,6 +96,10 @@ export interface SiteInfo {
     pageBackground: string
     aboutContent: string
     aboutHtml: string
+    /** 首页轮播用的图库图版（构建时从 gallery 里挑出带 hero 的项） */
+    heroPlates: GalleryItem[]
+    /** 构建时刻，页脚展示的快照时间 */
+    buildAt: string
     socials: {
       bilibili: string
       github: string
@@ -90,6 +114,8 @@ export interface SiteInfo {
     wordCount: number
     views: number
     likes: number
+    galleryCount: number
+    galleryBytes: number
   }
 }
 

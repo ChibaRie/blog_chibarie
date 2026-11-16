@@ -1,110 +1,68 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useSite } from '@/composables/useSite'
 import SocialLinks from '@/components/SocialLinks.vue'
-import { withBase } from '@/utils/asset'
-import { formatNumber } from '@/utils/format'
+import { useSite } from '@/composables/useSite'
 import { imagePreview as vImagePreview } from '@/directives/imagePreview'
 
 const { siteInfo } = useSite()
 
-const name = computed(() => siteInfo.value?.site.name || 'chibarie')
-const description = computed(
-  () => siteInfo.value?.site.description || '记录技术与生活',
-)
+const site = computed(() => siteInfo.value?.site)
 const stats = computed(() => siteInfo.value?.stats)
-const avatar = computed(() => siteInfo.value?.site.avatar || '')
+const name = computed(() => site.value?.name || 'chibarie')
+const description = computed(() => site.value?.description || '')
+const avatar = computed(() => site.value?.avatar || '')
+const location = computed(() => site.value?.socials.location || '')
+const aboutHtml = computed(() => site.value?.aboutHtml || '')
 
-// 正文内容来自 content/about.md，构建时已经渲染好
-const aboutHtml = computed(() => siteInfo.value?.site.aboutHtml || '')
+const cells = computed(() => {
+  const value = stats.value
+  if (!value) return []
+  const plain = (input: number) => input.toLocaleString('zh-CN')
+  return [
+    { label: '文章', value: plain(value.postCount) },
+    { label: '字数', value: plain(value.wordCount) },
+    { label: '图版', value: plain(value.galleryCount) },
+    { label: '标签', value: plain(value.tagCount) },
+  ]
+})
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-    <header class="text-center">
-      <div
-        class="mx-auto h-24 w-24 overflow-hidden rounded-full ring-2 ring-sakura-400/30 shadow-glow"
-      >
-        <img
-          v-if="avatar"
-          :src="avatar"
-          alt=""
-          class="h-full w-full object-cover"
-        />
-        <img
-          v-else
-          :src="withBase('/images/bg-hero.jpg')"
-          alt=""
-          class="h-full w-full scale-[3] object-cover"
-          style="object-position: 46% 24%"
-        />
-      </div>
-
-      <h1 class="mt-5 text-2xl font-medium tracking-tight text-mist-100">
-        {{ name }}
-      </h1>
-      <p class="mt-2 text-sm text-mist-400">{{ description }}</p>
-
-      <SocialLinks
-        size="md"
-        class="mt-4 inline-flex rounded-full bg-night-950/32 px-4 py-1.5 backdrop-blur-sm"
-      />
-
-      <div
-        v-if="stats"
-        class="mt-6 flex items-center justify-center divide-x divide-mist-400/15"
-      >
-        <div class="px-4 first:pl-0 last:pr-0">
-          <div class="text-sm font-medium text-mist-100">
-            {{ formatNumber(stats.postCount) }}
-          </div>
-          <div class="mt-0.5 text-[12px] text-mist-500">文章</div>
-        </div>
-        <div class="px-4">
-          <div class="text-sm font-medium text-mist-100">
-            {{ formatNumber(stats.wordCount) }}
-          </div>
-          <div class="mt-0.5 text-[12px] text-mist-500">总字数</div>
-        </div>
-        <div class="px-4">
-          <div class="text-sm font-medium text-mist-100">
-            {{ formatNumber(stats.tagCount) }}
-          </div>
-          <div class="mt-0.5 text-[12px] text-mist-500">标签</div>
-        </div>
-      </div>
+  <div class="shell">
+    <header class="page-head">
+      <span class="page-head__en">// About · Profile</span>
+      <h1 class="page-head__title">关于</h1>
+      <p class="page-head__sub">写代码、玩游戏、听歌、睡觉。这里是这些事留下的一点记录。</p>
     </header>
 
-    <div class="divider-glow my-10" />
+    <div class="about-grid">
+      <aside class="about-side">
+        <div class="about-avatar-wrap">
+          <div class="about-avatar">
+            <img v-if="avatar" :src="avatar" :alt="`${name} 的头像`">
+          </div>
+        </div>
 
-    <article
-      v-if="aboutHtml"
-      class="about-content glass-card article-body p-6 text-center sm:p-8"
-      v-image-preview
-      v-html="aboutHtml"
-    />
+        <div class="about-identity">
+          <h2 class="text-[26px] font-bold tracking-[0.03em]">{{ name }}</h2>
+          <p v-if="description">{{ description }}</p>
+          <p v-if="location" class="arc-field mt-1"><span>{{ location }}</span></p>
+          <SocialLinks class="profile__socials mt-2" />
+        </div>
 
-    <p v-else class="text-center text-sm text-mist-500">
-      关于页还没写内容，可以在后台「站点设置 → 关于页内容」里补充。
-    </p>
+        <div v-if="cells.length" class="profile__stats">
+          <div v-for="cell in cells" :key="cell.label" class="profile__stat">
+            <b>{{ cell.value }}</b>
+            <span>{{ cell.label }}</span>
+          </div>
+        </div>
+      </aside>
+
+      <div v-if="aboutHtml" class="about-body article-body" v-image-preview v-html="aboutHtml" />
+      <div v-else class="arc-empty">
+        <span class="arc-empty__en">// Empty</span>
+        <p>关于页还没有内容。把自我介绍写进 content/about.md 后重新构建即可。</p>
+      </div>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.about-content {
-  width: 100%;
-  max-width: 1000px;
-  margin-inline: auto;
-}
-.about-content :deep(h2) {
-  padding-left: 0;
-}
-.about-content :deep(h2::before) {
-  display: none;
-}
-.about-content :deep(ul),
-.about-content :deep(ol) {
-  padding-left: 0;
-  list-style: none;
-}
-</style>

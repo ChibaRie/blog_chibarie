@@ -3,28 +3,19 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center px-4 text-center">
-    <div class="relative">
-      <span
-        class="block text-[92px] font-medium leading-none text-night-700 select-none"
-      >
-        404
-      </span>
-      <span
-        class="absolute inset-0 flex items-center justify-center text-[92px] font-medium leading-none text-sakura-400/25 blur-[2px] select-none"
-      >
-        404
-      </span>
-    </div>
-
-    <h1 class="mt-6 text-lg font-medium text-mist-100">这里什么都没有</h1>
-    <p class="mt-2 text-sm text-mist-500">
-      页面可能被移动过，或者链接输错了。
-    </p>
-
-    <div class="mt-8 flex items-center gap-3">
-      <RouterLink to="/" class="btn-primary">回到首页</RouterLink>
-      <RouterLink to="/archive" class="btn-ghost">看看归档</RouterLink>
+  <div class="shell">
+    <div class="notfound">
+      <span class="page-head__en">// Not found · 404</span>
+      <p class="notfound__code" aria-hidden="true">4<b>0</b>4</p>
+      <div class="notfound__body">
+        <h1>这个位置没有记录</h1>
+        <p>页面可能被移动过，或者链接少了一段。从下面的入口继续找。</p>
+        <div class="notfound__actions">
+          <RouterLink to="/" class="arc-btn arc-btn--primary">回到首页</RouterLink>
+          <RouterLink to="/gallery" class="arc-btn">看看图库</RouterLink>
+          <RouterLink to="/archive" class="arc-btn">全部归档</RouterLink>
+        </div>
+      </div>
     </div>
   </div>
 </template>

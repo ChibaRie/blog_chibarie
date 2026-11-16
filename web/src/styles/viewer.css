@@ -1,0 +1,155 @@
+/* ==========================================================================
+   图片查看器：全屏深色，编号与真实尺寸常驻
+   ========================================================================== */
+
+.image-viewer {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: #0a0a0c;
+  color: #f2f0eb;
+}
+.image-viewer::backdrop { background: rgb(4 4 6 / 0.92); }
+.image-viewer[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+
+.image-viewer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: max(14px, env(safe-area-inset-top)) clamp(14px, 3vw, 30px) 12px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.14);
+}
+.image-viewer__id { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.image-viewer__no {
+  padding: 5px 9px;
+  background: #f2f0eb;
+  color: #0a0a0c;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+}
+.image-viewer__meta {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  color: rgb(242 240 235 / 0.6);
+}
+.image-viewer__meta span + span::before {
+  content: '/';
+  margin-right: 10px;
+  color: rgb(255 255 255 / 0.24);
+}
+.image-viewer__meta span + span { margin-left: 10px; }
+
+.image-viewer__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 10px clamp(16px, 5vw, 84px);
+}
+.image-viewer__img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: #141418;
+}
+.image-viewer__img--hidden { visibility: hidden; }
+
+.image-viewer__btn {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  background: rgb(9 9 11 / 0.7);
+  color: #f2f0eb;
+  cursor: pointer;
+  translate: 0 -50%;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+  transition: background-color var(--t-fast) var(--ease-ease), color var(--t-fast) var(--ease-ease);
+}
+.image-viewer__btn:hover:not(:disabled),
+.image-viewer__btn:focus-visible:not(:disabled) { background: #ff6fa5; color: #0c0c0e; border-color: transparent; }
+.image-viewer__btn:disabled { opacity: 0.28; cursor: default; }
+.image-viewer__btn svg { width: 20px; height: 20px; }
+.image-viewer__btn--prev { left: clamp(10px, 2vw, 24px); }
+.image-viewer__btn--next { right: clamp(10px, 2vw, 24px); }
+
+.image-viewer__status {
+  position: absolute;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  font-size: 13px;
+  color: rgb(242 240 235 / 0.7);
+  text-align: center;
+}
+.image-viewer__status button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  background: transparent;
+  color: #f2f0eb;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.image-viewer__status button:hover { background: #ff6fa5; color: #0c0c0e; }
+
+.image-viewer__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 20px;
+  min-height: 56px;
+  padding: 12px clamp(14px, 3vw, 30px) max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgb(255 255 255 / 0.14);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgb(242 240 235 / 0.5);
+}
+.image-viewer__foot span b { color: rgb(242 240 235 / 0.78); font-weight: 500; }
+.image-viewer__hint { color: rgb(242 240 235 / 0.36); }
+.image-viewer :focus-visible { outline: 2px solid #ff6fa5; outline-offset: 3px; }
+
+.image-viewer[open] .image-viewer__bar { animation: viewer-bar 200ms var(--ease-mech) backwards; }
+.image-viewer[open] .image-viewer__img { animation: viewer-img 320ms var(--ease-snap) backwards; }
+@keyframes viewer-bar { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes viewer-img { from { opacity: 0; transform: scale(0.985); } }
+@media (prefers-reduced-motion: reduce) {
+  .image-viewer[open] .image-viewer__bar,
+  .image-viewer[open] .image-viewer__img { animation: none; }
+}
+@media (max-width: 640px) {
+  .image-viewer__stage { padding: 6px 10px; }
+  .image-viewer__btn { width: 44px; height: 44px; }
+  .image-viewer__btn--prev { left: 8px; }
+  .image-viewer__btn--next { right: 8px; }
+  .image-viewer__foot { justify-content: center; text-align: center; }
+  .image-viewer__hint { display: none; }
+}

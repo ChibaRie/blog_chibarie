@@ -1,115 +1,74 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Note } from '@/api'
-import { useSite } from '@/composables/useSite'
-import { formatDate, formatRelative } from '@/utils/format'
 import { useImageViewer } from '@/composables/useImageViewer'
+import { formatDateDots, formatIndex } from '@/utils/format'
 
 const props = defineProps<{ note: Note }>()
-const { open: openImageViewer } = useImageViewer()
-const { siteInfo } = useSite()
-const avatar = computed(() => siteInfo.value?.site.avatar || '')
-const siteName = computed(() => siteInfo.value?.site.name || 'chibarie')
-const date = computed(() => props.note.publishedAt || props.note.createdAt)
-const cardRef = ref<HTMLElement | null>(null)
-const textRef = ref<HTMLElement | null>(null)
-const galleryRef = ref<HTMLElement | null>(null)
+const { open } = useImageViewer()
+
 const expanded = ref(false)
-const textOverflow = ref(false)
-const expandable = computed(() => expanded.value || props.note.images.length > 0 || textOverflow.value)
-let observer: ResizeObserver | undefined
-let resizeAnimation: Animation | undefined
-let revision = 0
-
-function measure() {
-  const text = textRef.value
-  if (text) textOverflow.value = text.scrollHeight > parseFloat(getComputedStyle(text).lineHeight) * 6 + 1
-}
-
-function previewImage(index: number, event: MouseEvent) {
-  ;(event.currentTarget as HTMLButtonElement).focus({ preventScroll: true })
-  openImageViewer(props.note.images.map((src, i) => ({ src, alt: `说说配图 ${i + 1}` })), index)
-}
-
-async function toggle() {
-  const card = cardRef.value
-  if (!card) return
-  const current = ++revision
-  const before = card.getBoundingClientRect()
-  resizeAnimation?.cancel()
-  expanded.value = !expanded.value
-  await nextTick()
-  measure()
-  await nextTick()
-  if (current !== revision) return
-  const after = card.getBoundingClientRect()
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!reduced) {
-    card.style.overflow = 'hidden'
-    const animation = card.animate([
-      { maxWidth: `${before.width}px`, height: `${before.height}px` },
-      { maxWidth: `${after.width}px`, height: `${after.height}px` },
-    ], { duration: 380, easing: 'cubic-bezier(.22,1,.36,1)' })
-    resizeAnimation = animation
-    animation.finished.then(() => {
-      if (resizeAnimation === animation) {
-        card.style.removeProperty('overflow')
-        resizeAnimation = undefined
-      }
-    }).catch(() => {})
-    if (expanded.value) {
-      const frames = [{ opacity: .65 }, { opacity: 1 }]
-      textRef.value?.animate(frames, { duration: 300, easing: 'ease-out' })
-      galleryRef.value?.animate(frames, { duration: 300, easing: 'ease-out' })
-    }
-  } else card.style.removeProperty('overflow')
-  if (!expanded.value && before.top < 80) card.scrollIntoView({ block: 'start', behavior: reduced ? 'instant' : 'smooth' })
-}
-
-onMounted(() => {
-  observer = new ResizeObserver(measure)
-  if (textRef.value) observer.observe(textRef.value)
-  measure()
-  void document.fonts.ready.then(measure)
+const date = computed(() => props.note.publishedAt || props.note.createdAt)
+const day = computed(() => formatDateDots(date.value))
+// 直接取正文里写的时刻（+08:00），不随访客时区漂移
+const clock = computed(() => {
+  const match = /T(\d{2}:\d{2})/.exec(date.value)
+  return match ? match[1] : ''
 })
-onUnmounted(() => { revision++; observer?.disconnect(); resizeAnimation?.cancel() })
+const hasLongText = computed(() => props.note.content.length > 240)
+const visibleImages = computed(() => props.note.images.slice(0, 3))
+const hiddenCount = computed(() => Math.max(0, props.note.images.length - 3))
+
+function openImage(index: number) {
+  open(
+    props.note.images.map((src, i) => ({ src, alt: `说说配图 ${i + 1}，共 ${props.note.images.length} 张` })),
+    index,
+  )
+}
 </script>
 
 <template>
-  <li ref="cardRef" class="glass-card p-5" :class="expanded ? 'note-expanded' : 'note-compact'" data-testid="note-item">
-    <div class="flex items-start gap-3">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-sakura-500/35 to-cosmos-500/35 text-xs font-medium text-mist-100">
-        <img v-if="avatar" :src="avatar" :alt="siteName" class="h-full w-full object-cover">
-        <template v-else>{{ siteName.slice(0, 1).toUpperCase() }}</template>
-      </div>
-      <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-sm text-mist-100">{{ siteName }}</span>
-          <time class="text-[12px] text-mist-600" :datetime="date" :title="formatDate(date, true)">{{ formatRelative(date) }}</time>
-        </div>
-        <p :id="`note-text-${note.id}`" ref="textRef" class="note-copy mt-2.5 whitespace-pre-wrap break-words text-[15px] leading-[1.85] text-mist-200"
-          :class="{ 'note-copy-overflow': !expanded && textOverflow }">{{ note.content }}</p>
-        <div v-if="note.images.length" :id="`note-images-${note.id}`" ref="galleryRef" class="note-gallery mt-3 grid gap-2"
-          :style="{ '--note-image-columns': Math.min(3, note.images.length) }"
-          :class="note.images.length === 1 ? 'grid-cols-1' : note.images.length <= 4 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'">
-          <button v-for="(image, index) in note.images" :key="image" type="button" :aria-label="`查看说说配图 ${index + 1}`"
-            :inert="!expanded && index >= 3" class="group block overflow-hidden rounded-lg border border-mist-400/12" @click="previewImage(index, $event)">
-            <img :src="image" :alt="`说说配图 ${index + 1}`" loading="lazy"
-              class="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              :class="note.images.length === 1 ? 'max-h-[420px]' : 'aspect-square'">
-          </button>
-        </div>
-        <div class="mt-3.5 flex items-center gap-4">
-          <time class="ml-auto hidden text-[12px] text-mist-600 sm:block" :datetime="date">{{ formatDate(date, true) }}</time>
-        </div>
-        <button v-if="expandable" type="button" class="note-expansion" :aria-expanded="expanded"
-          :aria-controls="`note-text-${note.id}${note.images.length ? ` note-images-${note.id}` : ''}`" @click="toggle">
-          <span>{{ expanded ? '收起说说' : '展开说说' }}</span><span v-if="note.images.length" class="note-image-count">{{ note.images.length }} 张配图</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+  <article class="logrow" data-testid="note-item">
+    <div class="logrow__time">
+      <time class="logrow__date" :datetime="date">{{ day }}</time>
+      <span v-if="clock" class="logrow__clock">{{ clock }}</span>
+      <span class="logrow__no">No.{{ formatIndex(note.id, 3) }}</span>
+    </div>
+
+    <div class="logrow__body">
+      <p
+        class="logrow__text"
+        :style="{ fontSize: `calc(16px * var(--app-body-scale))` }"
+        :class="{ 'logrow__text--clamped': hasLongText && !expanded }"
+      >{{ note.content }}</p>
+
+      <button
+        v-if="hasLongText"
+        type="button"
+        class="logrow__toggle"
+        :aria-expanded="expanded"
+        @click="expanded = !expanded"
+      >
+        {{ expanded ? '收起' : '展开全文' }}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      <div v-if="visibleImages.length" class="logrow__images">
+        <button
+          v-for="(image, index) in visibleImages"
+          :key="image"
+          type="button"
+          :aria-label="`查看第 ${index + 1} 张配图，共 ${note.images.length} 张`"
+          @click="openImage(index)"
+        >
+          <div class="arc-plateimg">
+            <img :src="image" :alt="`说说配图 ${index + 1}`" loading="lazy" decoding="async">
+            <span v-if="hiddenCount && index === 2" class="logrow__more" aria-hidden="true">+{{ hiddenCount }}</span>
+          </div>
         </button>
       </div>
     </div>
-  </li>
+  </article>
 </template>
-
-<style src="../styles/notes.css"></style>

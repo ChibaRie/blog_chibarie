@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { fetchPost, likePost, type Post, type TocItem } from '@/api'
+import { fetchArchive, fetchPost, likePost, type ArchiveItem, type Post, type TocItem } from '@/api'
 import { useSite } from '@/composables/useSite'
-import { formatDate, formatNumber } from '@/utils/format'
 import { imagePreview as vImagePreview } from '@/directives/imagePreview'
+import { formatDateDots, formatIndex, formatNumber } from '@/utils/format'
 
 const route = useRoute()
 const { siteInfo } = useSite()
@@ -12,14 +12,17 @@ const { siteInfo } = useSite()
 const post = ref<Post | null>(null)
 const html = ref('')
 const toc = ref<TocItem[]>([])
+const archive = ref<ArchiveItem[]>([])
 const loading = ref(true)
 const error = ref('')
-
 const likes = ref(0)
 const liked = ref(false)
 const activeHeading = ref('')
+const progress = ref(0)
+const articleRef = ref<HTMLElement | null>(null)
 
 const LIKE_KEY = 'chibarie-liked-posts'
+const DEFAULT_DESCRIPTION = 'chibarie 的个人档案 —— 技术笔记、生活记录与喜欢的画'
 
 function readLiked(): number[] {
   try {
@@ -30,12 +33,65 @@ function readLiked(): number[] {
 }
 
 function saveLiked(ids: number[]) {
-  localStorage.setItem(LIKE_KEY, JSON.stringify(ids))
+  try {
+    localStorage.setItem(LIKE_KEY, JSON.stringify([...new Set(ids)]))
+  } catch {
+    // 隐私模式下不持久化
+  }
 }
 
-const date = computed(() =>
-  formatDate(post.value?.publishedAt || post.value?.createdAt),
-)
+const date = computed(() => formatDateDots(post.value?.publishedAt || post.value?.createdAt))
+const recordNo = computed(() => {
+  if (!post.value) return ''
+  const index = archive.value.findIndex((item) => item.id === post.value?.id)
+  return index >= 0 ? formatIndex(index + 1, 3) : ''
+})
+const neighbor = computed(() => {
+  if (!post.value) return { newer: null as ArchiveItem | null, older: null as ArchiveItem | null }
+  const index = archive.value.findIndex((item) => item.id === post.value?.id)
+  if (index < 0) return { newer: null, older: null }
+  return {
+    newer: index > 0 ? archive.value[index - 1] : null,
+    older: index < archive.value.length - 1 ? archive.value[index + 1] : null,
+  }
+})
+
+let observer: IntersectionObserver | null = null
+
+function setupObserver() {
+  observer?.disconnect()
+  if (!toc.value.length) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) activeHeading.value = entry.target.id
+      }
+    },
+    { rootMargin: '-100px 0px -68% 0px', threshold: 0 },
+  )
+  for (const item of toc.value) {
+    const element = document.getElementById(item.id)
+    if (element) observer.observe(element)
+  }
+}
+
+function updateProgress() {
+  const article = articleRef.value
+  if (!article) return
+  const rect = article.getBoundingClientRect()
+  const total = rect.height - window.innerHeight + 200
+  const passed = Math.min(Math.max(-rect.top + 120, 0), Math.max(total, 0))
+  progress.value = total > 0 ? passed / total : 1
+}
+
+let progressFrame = 0
+function handleScroll() {
+  if (progressFrame) return
+  progressFrame = requestAnimationFrame(() => {
+    progressFrame = 0
+    updateProgress()
+  })
+}
 
 async function load(slug: string) {
   loading.value = true
@@ -45,15 +101,19 @@ async function load(slug: string) {
     post.value = data
     likes.value = data.likes
     liked.value = readLiked().includes(data.id)
-
     html.value = data.contentHtml
     toc.value = data.toc || []
+    activeHeading.value = toc.value[0]?.id || ''
 
     const siteName = siteInfo.value?.site.name || 'chibarie'
     document.title = `${data.title} · ${siteName}`
-    document
-      .querySelector('meta[name="description"]')
-      ?.setAttribute('content', data.summary || '')
+    document.querySelector('meta[name="description"]')?.setAttribute('content', data.summary || '')
+
+    archive.value = await fetchArchive()
+    requestAnimationFrame(() => {
+      updateProgress()
+      setupObserver()
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : '文章加载失败'
   } finally {
@@ -68,44 +128,21 @@ async function handleLike() {
     likes.value = res.likes
     liked.value = true
     saveLiked([...readLiked(), post.value.id])
-  } catch (err) {
-    console.error('[like] 失败', err)
-  }
-}
-
-let observer: IntersectionObserver | null = null
-
-function setupObserver() {
-  observer?.disconnect()
-  if (!toc.value.length) return
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          activeHeading.value = entry.target.id
-        }
-      }
-    },
-    { rootMargin: '-90px 0px -70% 0px', threshold: 0 },
-  )
-
-  for (const item of toc.value) {
-    const el = document.getElementById(item.id)
-    if (el) observer.observe(el)
+  } catch {
+    // 点赞失败时保持未点赞状态
   }
 }
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
   await load(String(route.params.slug))
-  setTimeout(setupObserver, 120)
 })
 
 onUnmounted(() => {
   observer?.disconnect()
-  document
-    .querySelector('meta[name="description"]')
-    ?.setAttribute('content', 'chibarie 的个人博客 —— 记录技术与生活')
+  window.removeEventListener('scroll', handleScroll)
+  if (progressFrame) cancelAnimationFrame(progressFrame)
+  document.querySelector('meta[name="description"]')?.setAttribute('content', DEFAULT_DESCRIPTION)
 })
 
 watch(
@@ -113,147 +150,158 @@ watch(
   async (next) => {
     if (!next || next === post.value?.slug) return
     await load(String(next))
-    setTimeout(setupObserver, 120)
   },
 )
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-    <div v-if="loading" class="mx-auto max-w-3xl space-y-4">
-      <div class="h-8 w-2/3 animate-pulse rounded-lg bg-night-700/50" />
-      <div class="h-4 w-1/3 animate-pulse rounded bg-night-700/40" />
-      <div class="glass-card h-64 animate-pulse" />
+  <Teleport to="body">
+    <div class="read-progress" aria-hidden="true">
+      <i :style="{ transform: `scaleX(${progress})` }" />
+    </div>
+  </Teleport>
+
+  <div class="shell">
+    <div v-if="loading" class="article-layout" aria-hidden="true">
+      <div class="article-main">
+        <div class="skeleton skeleton--line mt-10" style="width: 180px" />
+        <div class="skeleton mt-6" style="width: 82%; height: 46px" />
+        <div class="skeleton mt-3" style="width: 64%; height: 46px" />
+        <div class="skeleton mt-6" style="width: 60%; height: 18px" />
+        <div class="skeleton mt-8" style="width: 100%; aspect-ratio: 21 / 9" />
+        <div v-for="i in 6" :key="i" class="skeleton skeleton--line mt-4" style="width: 100%" />
+      </div>
     </div>
 
-    <div v-else-if="error" class="glass-card mx-auto max-w-3xl p-10 text-center">
-      <p class="text-sm text-mist-400">{{ error }}</p>
-      <RouterLink to="/" class="btn-ghost mt-5">返回首页</RouterLink>
+    <div v-else-if="error" class="arc-empty mt-10">
+      <span class="arc-empty__en">// Not found</span>
+      <p>{{ error }}。它可能还没有发布，或者链接里的 slug 不对。</p>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <RouterLink to="/" class="arc-btn arc-btn--primary">回到首页</RouterLink>
+        <RouterLink to="/archive" class="arc-btn">全部归档</RouterLink>
+      </div>
     </div>
 
-    <div
-      v-else-if="post"
-      class="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_210px]"
-    >
-      <article class="min-w-0">
-        <RouterLink
-          to="/"
-          class="inline-flex items-center gap-1.5 text-xs text-mist-500 transition-colors hover:text-sakura-200"
-        >
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <path d="M15 18 L9 12 L15 6" />
-          </svg>
-          返回首页
-        </RouterLink>
+    <div v-else-if="post" class="article-layout">
+      <article ref="articleRef" class="article-main">
+        <div class="flex items-center justify-between gap-3 pt-6">
+          <RouterLink to="/archive" class="arc-head__more">
+            ← 归档
+          </RouterLink>
+          <span v-if="recordNo" class="arc-stamp arc-stamp--accent">No.{{ recordNo }}</span>
+        </div>
 
-        <header class="mt-5">
-          <div class="flex flex-wrap items-center gap-2">
-            <span
-              v-if="post.isTop"
-              class="tag-pill border-sakura-400/40 bg-sakura-500/20 text-sakura-200"
-            >
-              置顶
+        <header class="article-head">
+          <div class="article-head__fields">
+            <span class="arc-field">
+              <span>{{ date }}</span>
+              <span v-if="post.category">{{ post.category.name }}</span>
+              <span>{{ post.wordCount }} 字</span>
+              <span>约 {{ post.readingTime }} 分钟</span>
             </span>
-            <RouterLink
-              v-if="post.category"
-              :to="`/categories?slug=${post.category.slug}`"
-              class="tag-pill tag-pill-hover"
+          </div>
+          <h1 class="article-title">{{ post.title }}</h1>
+          <p v-if="post.summary" class="article-summary">{{ post.summary }}</p>
+        </header>
+
+        <figure v-if="post.cover" class="article-cover">
+          <div class="arc-plateimg">
+            <img :src="post.cover" alt="" loading="eager" decoding="async">
+          </div>
+        </figure>
+
+        <details v-if="toc.length" class="toc-mobile">
+          <summary>
+            <span>目录 / Contents</span>
+            <span>{{ toc.length }} 节</span>
+          </summary>
+          <nav class="toc__list" aria-label="文章目录">
+            <a
+              v-for="(item, index) in toc"
+              :key="item.id"
+              :href="`#${item.id}`"
+              class="toc__link"
+              :class="{ 'toc__link--sub': item.level === 3 }"
             >
-              {{ post.category.name }}
+              <i aria-hidden="true">{{ index + 1 }}</i>
+              <span>{{ item.text }}</span>
+            </a>
+          </nav>
+        </details>
+
+        <div class="article-body-wrap">
+          <div v-image-preview class="article-body" v-html="html" />
+        </div>
+
+        <div class="article-foot">
+          <div v-if="post.tags?.length" class="article-tags">
+            <RouterLink
+              v-for="tag in post.tags"
+              :key="tag.id"
+              :to="`/tags?slug=${tag.slug}`"
+              class="arc-tag"
+            >
+              {{ tag.name }}
             </RouterLink>
           </div>
 
-          <h1
-            class="mt-4 text-2xl font-medium leading-snug tracking-tight text-mist-100 sm:text-3xl"
-          >
-            {{ post.title }}
-          </h1>
-
-          <div
-            class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-mist-500"
-          >
-            <span>{{ date }}</span>
-            <span>{{ post.wordCount }} 字</span>
-            <span>约 {{ post.readingTime }} 分钟</span>
-          </div>
-        </header>
-
-        <div class="divider-glow my-7" />
-
-        <div v-image-preview class="article-body" v-html="html" />
-
-        <div v-if="post.tags?.length" class="mt-8 flex flex-wrap gap-2">
-          <RouterLink
-            v-for="tag in post.tags"
-            :key="tag.id"
-            :to="`/tags?slug=${tag.slug}`"
-            class="tag-pill tag-pill-hover"
-          >
-            # {{ tag.name }}
-          </RouterLink>
-        </div>
-
-        <div class="mt-10 flex justify-center">
-          <button
-            class="group flex flex-col items-center gap-1.5 rounded-xl px-6 py-4 transition-colors"
-            :class="
-              liked
-                ? 'text-sakura-300'
-                : 'text-mist-400 hover:bg-sakura-500/10 hover:text-sakura-200'
-            "
-            :disabled="liked"
-            @click="handleLike"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              :fill="liked ? 'currentColor' : 'none'"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              :class="['transition-transform duration-300', liked ? 'scale-110' : 'group-hover:scale-110']"
+          <div class="article-actions">
+            <button
+              type="button"
+              class="like-btn"
+              :aria-pressed="liked"
+              :aria-label="liked ? `已点赞，${likes} 个赞` : `点个赞，当前 ${likes} 个赞`"
+              @click="handleLike"
             >
-              <path
-                d="M12 21s-8-4.6-8-10.4A4.6 4.6 0 0 1 12 7.5a4.6 4.6 0 0 1 8 3.1C20 16.4 12 21 12 21z"
-              />
-            </svg>
-            <span class="text-xs">{{ liked ? '已点赞' : '点个赞' }}</span>
-            <span class="text-[12px] opacity-70">{{ formatNumber(likes) }}</span>
-          </button>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20.5S4 15.6 4 9.9A4.4 4.4 0 0 1 12 7.4a4.4 4.4 0 0 1 8 2.5c0 5.7-8 10.6-8 10.6Z" />
+              </svg>
+              <span>{{ liked ? '已点赞' : '点个赞' }}</span>
+              <span class="num">{{ formatNumber(likes) }}</span>
+            </button>
+
+            <RouterLink to="/archive" class="arc-btn">全部归档</RouterLink>
+          </div>
+
+          <nav v-if="neighbor.newer || neighbor.older" class="post-nav" aria-label="相邻文章">
+            <RouterLink
+              v-if="neighbor.newer"
+              :to="`/post/${neighbor.newer.slug || neighbor.newer.id}`"
+              class="post-nav__item"
+            >
+              <span class="post-nav__dir">Newer / 较新</span>
+              <span class="post-nav__title">{{ neighbor.newer.title }}</span>
+            </RouterLink>
+            <div v-else class="post-nav__item post-nav__item--empty" aria-hidden="true" />
+
+            <RouterLink
+              v-if="neighbor.older"
+              :to="`/post/${neighbor.older.slug || neighbor.older.id}`"
+              class="post-nav__item post-nav__item--next"
+            >
+              <span class="post-nav__dir">Older / 较早</span>
+              <span class="post-nav__title">{{ neighbor.older.title }}</span>
+            </RouterLink>
+            <div v-else class="post-nav__item post-nav__item--empty" aria-hidden="true" />
+          </nav>
         </div>
       </article>
 
-      <!-- 目录 -->
-      <aside class="hidden lg:block">
-        <div v-if="toc.length" class="sticky top-24">
-          <h3 class="section-label mb-4">目录</h3>
-          <nav class="space-y-0.5 border-l border-mist-400/12">
-            <a
-              v-for="item in toc"
-              :key="item.id"
-              :href="`#${item.id}`"
-              class="block border-l-2 py-1 text-[14px] leading-snug transition-colors duration-200"
-              :class="[
-                item.level === 3 ? 'pl-6' : 'pl-3',
-                activeHeading === item.id
-                  ? 'border-sakura-400 text-sakura-200'
-                  : 'border-transparent text-mist-500 hover:border-mist-400/40 hover:text-mist-300',
-              ]"
-            >
-              {{ item.text }}
-            </a>
-          </nav>
-        </div>
+      <aside class="toc" aria-label="文章目录">
+        <p class="toc__label"><b>//</b> Contents <span>目录</span></p>
+        <nav class="toc__list">
+          <a
+            v-for="(item, index) in toc"
+            :key="item.id"
+            :href="`#${item.id}`"
+            class="toc__link"
+            :class="{ 'toc__link--sub': item.level === 3 }"
+            :aria-current="activeHeading === item.id ? 'location' : undefined"
+          >
+            <i aria-hidden="true">{{ index + 1 }}</i>
+            <span>{{ item.text }}</span>
+          </a>
+        </nav>
       </aside>
     </div>
   </div>

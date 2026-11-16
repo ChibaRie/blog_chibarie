@@ -1,6 +1,16 @@
 import { ref } from 'vue'
 
-export interface PreviewImage { src: string; alt: string }
+export interface PreviewImage {
+  src: string
+  alt: string
+  /** 图库图版的编号与真实文件信息，文章配图可以不带 */
+  no?: number
+  width?: number
+  height?: number
+  bytes?: number
+  source?: string
+}
+
 const images = ref<PreviewImage[]>([])
 const index = ref(0)
 const isOpen = ref(false)
@@ -12,8 +22,14 @@ export function useImageViewer() {
     index.value = Math.max(0, Math.min(items.length - 1, selected))
     isOpen.value = true
   }
-  function close() { isOpen.value = false }
-  function previous() { index.value = Math.max(0, index.value - 1) }
-  function next() { index.value = Math.min(images.value.length - 1, index.value + 1) }
+  function close() {
+    isOpen.value = false
+  }
+  function previous() {
+    index.value = Math.max(0, index.value - 1)
+  }
+  function next() {
+    index.value = Math.min(images.value.length - 1, index.value + 1)
+  }
   return { images, index, isOpen, open, close, previous, next }
 }

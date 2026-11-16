@@ -58,12 +58,12 @@ const md = new MarkdownIt({
           language: lang,
           ignoreIllegals: true,
         })
-        return `<pre class="hljs"><code class="language-${lang}">${result.value}</code></pre>`
+        return `<pre class="hljs" data-lang="${md.utils.escapeHtml(lang)}"><code class="language-${md.utils.escapeHtml(lang)}">${result.value}</code></pre>`
       } catch {
         // 落到下面的兜底
       }
     }
-    return `<pre class="hljs"><code>${md.utils.escapeHtml(code)}</code></pre>`
+    return `<pre class="hljs" data-lang="text"><code>${md.utils.escapeHtml(code)}</code></pre>`
   },
 })
 
@@ -93,12 +93,12 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
 }
 
 // 提示块：::: tip [自定义标题] ... :::
-const CALLOUTS: Record<string, { label: string }> = {
-  tip: { label: '提示' },
-  info: { label: '说明' },
-  warning: { label: '注意' },
-  danger: { label: '警告' },
-  quote: { label: '摘录' },
+const CALLOUTS: Record<string, { label: string; en: string }> = {
+  tip: { label: '提示', en: 'TIP' },
+  info: { label: '说明', en: 'INFO' },
+  warning: { label: '注意', en: 'NOTE' },
+  danger: { label: '警告', en: 'WARN' },
+  quote: { label: '摘录', en: 'QUOTE' },
 }
 
 for (const [type, meta] of Object.entries(CALLOUTS)) {
@@ -108,7 +108,7 @@ for (const [type, meta] of Object.entries(CALLOUTS)) {
       if (token.nesting === 1) {
         const custom = token.info.trim().slice(type.length).trim()
         const title = custom || meta.label
-        return `<div class="callout callout-${type}"><p class="callout-title">${md.utils.escapeHtml(title)}</p>\n`
+        return `<div class="callout callout-${type}"><p class="callout-title"><span class="callout-kind">${meta.en}</span><span>${md.utils.escapeHtml(title)}</span></p>\n`
       }
       return '</div>\n'
     },

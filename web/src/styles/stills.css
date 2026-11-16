@@ -1,0 +1,135 @@
+/* ==========================================================================
+   图版：首页精选格子与图库规格表
+   ========================================================================== */
+
+/* ---------- 图版网格（首页精选 + 图库） ---------- */
+.stills-feature {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: clamp(150px, 13.5vw, 230px);
+  gap: 1px;
+  background: rgb(var(--c-line) / 0.16);
+  border-block: 1px solid rgb(var(--c-line) / 0.16);
+}
+.stills-feature__cell {
+  position: relative;
+  display: block;
+  min-height: 0;
+  background: rgb(var(--c-paper));
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+.stills-feature__cell--wide { grid-column: span 2; grid-row: span 2; }
+.stills-feature__cell .arc-plateimg { position: absolute; inset: 0; clip-path: none; }
+.stills-feature__cell .arc-plateimg::after { opacity: 0.55; }
+.stills-feature__cell:hover .arc-plateimg img { transform: scale(1.03); }
+.stills-feature__meta {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  color: #f2f0eb;
+  pointer-events: none;
+}
+.stills-feature__no {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+.stills-feature__res {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: rgb(242 240 235 / 0.6);
+}
+.stills-feature__cell:focus-visible { outline-offset: -4px; }
+@media (max-width: 900px) {
+  .stills-feature { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: clamp(140px, 30vw, 220px); }
+}
+@media (max-width: 520px) {
+  .stills-feature { grid-auto-rows: 44vw; }
+  .stills-feature__res { display: none; }
+}
+
+/* 图库：规格表式网格 */
+.stills-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 18px;
+  border-bottom: 1px solid rgb(var(--c-line) / 0.16);
+}
+.stills-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.stills-sort { display: flex; align-items: center; gap: 10px; }
+.stills-sort__label {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(var(--c-ink3));
+}
+.stills-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: rgb(var(--c-line) / 0.16);
+  border-bottom: 1px solid rgb(var(--c-line) / 0.16);
+}
+.stills-grid__cell {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  background: rgb(var(--c-paper));
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.stills-grid__cell:focus-visible { outline-offset: -4px; }
+.stills-grid__img { aspect-ratio: 4 / 3; position: relative; overflow: hidden; background: var(--avg, rgb(var(--c-plate2))); }
+.stills-grid__img img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms var(--ease-ease); }
+.stills-grid__cell:hover .stills-grid__img img { transform: scale(1.025); }
+.stills-grid__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid rgb(var(--c-line) / 0.1);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+.stills-grid__no { font-size: 11px; font-weight: 600; color: rgb(var(--c-ink2)); }
+.stills-grid__res { font-size: 9.5px; color: rgb(var(--c-ink3)); }
+.stills-grid__cell:hover .stills-grid__no { color: rgb(var(--c-accent-text)); }
+@media (max-width: 1000px) {
+  .stills-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .stills-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stills-grid__res { display: none; }
+}
+.stills-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-block: 18px;
+  font-size: 12px;
+  color: rgb(var(--c-ink3));
+}

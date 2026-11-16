@@ -1,21 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="night" data-motion="on">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="chibarie 的个人博客 —— 记录技术与生活" />
-    <meta name="theme-color" content="#0d0a1a" />
+    <meta name="description" content="chibarie 的个人档案 —— 技术笔记、生活记录与喜欢的画" />
+    <meta name="theme-color" content="#0a0a0c" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>chibarie</title>
     <script>
-      // 在首屏渲染前定好主题，避免亮色用户看到一瞬暗色（FOUC）
-      // 注意：默认暗色，与 src/composables/useTheme.ts 的 initTheme 逻辑保持一致
+      // 首屏前定好主题与动效，避免纸白用户看到一瞬深色。
+      // 与 src/composables/useTheme.ts、useAppearance.ts 的存储键保持一致。
       ;(function () {
+        var root = document.documentElement
         try {
-          if (localStorage.getItem('chibarie-theme') === 'light') {
-            document.documentElement.classList.add('light')
-          }
-        } catch (e) {}
+          var theme = localStorage.getItem('chibarie-theme')
+          root.setAttribute('data-theme', theme === 'paper' || theme === 'light' ? 'paper' : 'night')
+          var saved = JSON.parse(localStorage.getItem('chibarie-appearance-v2') || '{}')
+          root.setAttribute('data-motion', saved && saved.motion === false ? 'off' : 'on')
+        } catch (e) {
+          root.setAttribute('data-theme', 'night')
+          root.setAttribute('data-motion', 'on')
+        }
       })()
     </script>
   </head>

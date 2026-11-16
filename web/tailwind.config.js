@@ -1,7 +1,7 @@
 /**
- * 配色统一走 CSS 变量：色板本身定义在 src/styles/main.css 里，
- * 暗色为默认值（:root），html.light 覆盖为亮色值。
- * 这样组件里所有 bg-night-800/55、text-mist-300 之类的写法无需改动即可跟随主题。
+ * 配色统一走 CSS 变量，色板本身定义在 src/styles/tokens.css。
+ * 夜航是默认值（:root），纸白通过 html[data-theme='paper'] 覆盖。
+ * 组件里写 bg-plate、text-ink2、border-line/20 即可跟随主题。
  */
 const c = (name) => `rgb(var(--c-${name}) / <alpha-value>)`
 
@@ -11,95 +11,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        // night = 页面与卡片底色（950 最深 -> 500 最浅）
-        night: {
-          950: c('night-950'),
-          900: c('night-900'),
-          800: c('night-800'),
-          700: c('night-700'),
-          600: c('night-600'),
-          500: c('night-500'),
-        },
-        // sakura = 主强调色
-        sakura: {
-          200: c('sakura-200'),
-          300: c('sakura-300'),
-          400: c('sakura-400'),
-          500: c('sakura-500'),
-          600: c('sakura-600'),
-          700: c('sakura-700'),
-        },
-        // cosmos = 次强调色
-        cosmos: {
-          200: c('cosmos-200'),
-          300: c('cosmos-300'),
-          400: c('cosmos-400'),
-          500: c('cosmos-500'),
-          600: c('cosmos-600'),
-          700: c('cosmos-700'),
-        },
-        // mist = 文字与描边（100 最重 -> 600 最轻）
-        mist: {
-          100: c('mist-100'),
-          200: c('mist-200'),
-          300: c('mist-300'),
-          400: c('mist-400'),
-          500: c('mist-500'),
-          600: c('mist-600'),
-        },
+        paper: c('paper'),
+        paper2: c('paper2'),
+        plate: c('plate'),
+        plate2: c('plate2'),
+        ink: c('ink'),
+        ink2: c('ink2'),
+        ink3: c('ink3'),
+        ink4: c('ink4'),
+        line: c('line'),
+        accent: c('accent'),
+        accentInk: c('accent-ink'),
+        accentText: c('accent-text'),
+        danger: c('danger'),
+        cmd: c('cmd'),
+        cmdInk: c('cmd-ink'),
       },
-      // 整体较默认刻度上调约 1px，行高保持相对比例
-      fontSize: {
-        xs: ['13px', { lineHeight: '1.35' }],
-        sm: ['15px', { lineHeight: '1.5' }],
-        base: ['17px', { lineHeight: '1.5' }],
-        lg: ['19px', { lineHeight: '1.55' }],
-        xl: ['21px', { lineHeight: '1.5' }],
-        '2xl': ['25px', { lineHeight: '1.4' }],
-        '3xl': ['31px', { lineHeight: '1.35' }],
-        '4xl': ['37px', { lineHeight: '1.3' }],
-      },
-      opacity: Object.fromEntries(
-        Array.from({ length: 100 }, (_, i) => [i, `${i / 100}`]),
-      ),
       fontFamily: {
         sans: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
+          'Saira',
           'PingFang SC',
-          'Hiragino Sans GB',
           'Microsoft YaHei',
-          'Source Han Sans SC',
-          'Noto Sans CJK SC',
+          'Noto Sans SC',
           'sans-serif',
         ],
-        mono: [
-          'JetBrains Mono',
-          'Fira Code',
-          'Cascadia Code',
-          'Consolas',
-          'Menlo',
-          'monospace',
-        ],
+        mono: ['ui-monospace', 'Cascadia Code', 'JetBrains Mono', 'Consolas', 'monospace'],
       },
-      boxShadow: {
-        soft: 'var(--shadow-soft)',
-        glow: 'var(--shadow-glow)',
+      fontSize: {
+        xs: ['12px', { lineHeight: '1.5' }],
+        sm: ['13px', { lineHeight: '1.6' }],
+        base: ['15px', { lineHeight: '1.7' }],
+        lg: ['17px', { lineHeight: '1.7' }],
+        xl: ['20px', { lineHeight: '1.5' }],
+        '2xl': ['24px', { lineHeight: '1.4' }],
+        '3xl': ['30px', { lineHeight: '1.3' }],
+        '4xl': ['38px', { lineHeight: '1.2' }],
+        '5xl': ['48px', { lineHeight: '1.1' }],
       },
-      backdropBlur: {
-        card: '14px',
-      },
-      keyframes: {
-        fadeUp: {
-          from: { opacity: '0', transform: 'translateY(12px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
-        },
-      },
-      animation: {
-        // 用 backwards 而非 both：both 会让动画结束后永久占用 transform，
-        // 压住卡片 hover 的上浮效果（CSS 动画优先级高于普通声明）
-        fadeUp: 'fadeUp 0.5s ease-out backwards',
+      borderColor: {
+        DEFAULT: c('line'),
       },
     },
   },

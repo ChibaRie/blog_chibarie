@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchCategories, fetchPosts, type Category, type Post } from '@/api'
-import ArticleCard from '@/components/ArticleCard.vue'
+import RecordRow from '@/components/RecordRow.vue'
+import { formatIndex } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -10,127 +11,108 @@ const router = useRouter()
 const categories = ref<Category[]>([])
 const posts = ref<Post[]>([])
 const loading = ref(true)
-const postsLoading = ref(false)
+const error = ref('')
 
-const activeSlug = computed(() => (route.query.slug as string) || '')
+const activeSlug = computed(() => String(route.query.slug || ''))
 const activeCategory = computed(
-  () => categories.value.find((c) => c.slug === activeSlug.value) || null,
+  () => categories.value.find((category) => category.slug === activeSlug.value) || null,
 )
+const visiblePosts = computed(() =>
+  activeCategory.value
+    ? posts.value.filter((post) => post.categoryId === activeCategory.value?.id)
+    : posts.value,
+)
+const totalPosts = computed(() => posts.value.length)
 
-async function loadPosts() {
-  if (!activeCategory.value) {
-    posts.value = []
-    return
-  }
-  postsLoading.value = true
-  try {
-    const res = await fetchPosts({
-      categoryId: activeCategory.value.id,
-      pageSize: 50,
-    })
-    posts.value = res.list
-  } catch (err) {
-    console.error('[category] 加载文章失败', err)
-  } finally {
-    postsLoading.value = false
-  }
-}
-
-function selectCategory(slug: string) {
-  const next = slug === activeSlug.value ? {} : { slug }
-  void router.push({ path: '/categories', query: next })
+function select(slug: string) {
+  const query = { ...route.query }
+  if (!slug || slug === activeSlug.value) delete query.slug
+  else query.slug = slug
+  void router.replace({ query })
 }
 
 onMounted(async () => {
   try {
-    categories.value = await fetchCategories()
-    await loadPosts()
+    const [categoryList, postPage] = await Promise.all([
+      fetchCategories(),
+      fetchPosts({ pageSize: 50 }),
+    ])
+    categories.value = categoryList
+    posts.value = postPage.list
   } catch (err) {
-    console.error('[categories] 加载失败', err)
+    error.value = err instanceof Error ? err.message : '分类加载失败'
   } finally {
     loading.value = false
   }
 })
-
-watch(activeSlug, () => void loadPosts())
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-    <header class="mb-8">
-      <h1 class="text-2xl font-medium tracking-tight text-mist-100">分类</h1>
-      <p class="mt-2 text-sm text-mist-500">
-        共 {{ categories.length }} 个分类，点击查看该分类下的文章
-      </p>
+  <div class="shell">
+    <header class="page-head">
+      <span class="page-head__en">// Sections</span>
+      <h1 class="page-head__title">分类</h1>
+      <p class="page-head__sub">按内容方向分组。点一行筛选下面的记录，再点一次取消。</p>
+      <div v-if="categories.length" class="page-head__fields">
+        <span class="arc-field">
+          <span>{{ categories.length }} 个分类</span>
+          <span>{{ totalPosts }} 篇文章</span>
+        </span>
+      </div>
     </header>
 
-    <div v-if="loading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div v-for="i in 3" :key="i" class="glass-card h-28 animate-pulse" />
+    <div v-if="loading" aria-hidden="true">
+      <div v-for="i in 4" :key="i" class="skeleton skeleton--row" />
     </div>
 
-    <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <button
-        v-for="item in categories"
-        :key="item.id"
-        class="glass-card glass-card-hover group p-5 text-left"
-        :class="
-          activeSlug === item.slug
-            ? 'border-sakura-400/45 bg-sakura-500/10 shadow-glow'
-            : ''
-        "
-        @click="selectCategory(item.slug)"
-      >
-        <div class="flex items-start justify-between gap-3">
-          <h2
-            class="text-base font-medium transition-colors"
-            :class="
-              activeSlug === item.slug
-                ? 'text-sakura-200'
-                : 'text-mist-100 group-hover:text-sakura-200'
-            "
-          >
-            {{ item.name }}
+    <div v-else-if="error" class="arc-empty">
+      <span class="arc-empty__en">// Offline</span>
+      <p>{{ error }}。请刷新页面重试。</p>
+    </div>
+
+    <template v-else>
+      <div class="index-rows" role="group" aria-label="按分类筛选">
+        <button
+          v-for="(category, index) in categories"
+          :key="category.id"
+          type="button"
+          class="index-row"
+          :aria-pressed="activeSlug === category.slug"
+          @click="select(category.slug)"
+        >
+          <span class="index-row__no" aria-hidden="true">{{ formatIndex(index + 1) }}</span>
+          <span class="index-row__name">{{ category.name }}</span>
+          <span class="index-row__desc">{{ category.description }}</span>
+          <span class="index-row__count" :aria-label="`${category.postCount} 篇文章`">
+            {{ formatIndex(category.postCount) }}
+          </span>
+        </button>
+      </div>
+
+      <section class="filter-result" aria-labelledby="filter-heading">
+        <div class="filter-result__head">
+          <h2 id="filter-heading">
+            {{ activeCategory ? activeCategory.name : '全部记录' }}
           </h2>
-          <span
-            class="shrink-0 rounded-full bg-cosmos-600/30 px-2 py-0.5 text-[12px] text-cosmos-200"
-          >
-            {{ item.postCount }}
+          <span class="arc-field">
+            <span>{{ visiblePosts.length }} 篇</span>
+            <span v-if="activeCategory">{{ activeCategory.slug }}</span>
           </span>
         </div>
-        <p v-if="item.description" class="mt-2 line-clamp-2 text-xs leading-relaxed text-mist-500">
-          {{ item.description }}
-        </p>
-      </button>
-    </div>
 
-    <Transition
-      enter-active-class="transition duration-300 ease-out"
-      enter-from-class="opacity-0 translate-y-2"
-    >
-      <section v-if="activeCategory" class="mt-10">
-        <div class="mb-5 flex items-center gap-3">
-          <h2 class="section-label">{{ activeCategory.name }}</h2>
-          <span class="h-px flex-1 bg-mist-400/12" />
-          <button
-            class="text-xs text-mist-500 transition-colors hover:text-sakura-200"
-            @click="selectCategory(activeCategory.slug)"
-          >
-            收起
-          </button>
+        <div v-if="visiblePosts.length === 0" class="arc-empty">
+          <span class="arc-empty__en">// Empty</span>
+          <p>这个分类下还没有文章。</p>
         </div>
-
-        <div v-if="postsLoading" class="space-y-4">
-          <div v-for="i in 2" :key="i" class="glass-card h-32 animate-pulse" />
-        </div>
-
-        <div v-else-if="posts.length === 0" class="glass-card p-8 text-center text-sm text-mist-500">
-          该分类下还没有文章。
-        </div>
-
-        <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ArticleCard v-for="post in posts" :key="post.id" :post="post" />
+        <div v-else class="home-list">
+          <RecordRow
+            v-for="(post, index) in visiblePosts"
+            :key="post.id"
+            :post="post"
+            :index="index + 1"
+          />
         </div>
       </section>
-    </Transition>
+    </template>
   </div>
 </template>

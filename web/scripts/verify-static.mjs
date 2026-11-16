@@ -9,17 +9,18 @@ const CHROME_PATH =
   process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 const routes = [
-  { path: '/', expect: '最新文章' },
+  { path: '/', expect: '最新记录' },
   { path: '/post/vue3-composition-api-post-list', expect: '组合式 API' },
   { path: '/post/comfyui-local-diffusion-control', expect: 'ComfyUI' },
   { path: '/notes', expect: '说说' },
+  { path: '/gallery', expect: '按编号排列' },
   { path: '/archive', expect: '归档' },
   { path: '/categories', expect: '分类' },
   { path: '/tags', expect: '标签' },
   { path: '/links', expect: '友链' },
   { path: '/about', expect: '关于' },
   { path: '/search', expect: '搜索' },
-  { path: '/no-such-page', expect: '这里什么都没有', status: [200, 404] },
+  { path: '/no-such-page', expect: '这个位置没有记录', status: [200, 404] },
 ]
 
 const browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true })
@@ -81,7 +82,7 @@ for (const route of routes) {
 await page.goto(`${BASE}/`, { waitUntil: 'networkidle' })
 const postLinks = await page.locator('a[href*="/post/"]').count()
 console.log(`home post links: ${postLinks}`)
-if (postLinks < 9) failures.push(`[home] 文章链接只有 ${postLinks} 个`)
+if (postLinks < 6) failures.push(`[home] 最新记录只有 ${postLinks} 个`)
 
 // 文章页正文与图片
 await page.goto(`${BASE}/post/agentcraft-project`, { waitUntil: 'networkidle' })

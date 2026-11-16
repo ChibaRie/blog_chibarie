@@ -9,6 +9,7 @@ import type {
   ArchiveItem,
   Category,
   FriendLink,
+  GalleryItem,
   Note,
   PageData,
   Post,
@@ -28,6 +29,7 @@ interface ContentIndex {
   notes: Note[]
   links: FriendLink[]
   archive: ArchiveItem[]
+  gallery: GalleryItem[]
 }
 
 interface PostDetail {
@@ -176,5 +178,9 @@ export async function fetchNotes(
 }
 
 export const fetchArchive = async (): Promise<ArchiveItem[]> => content.archive
+
+// ===== 图库 =====
+
+export const fetchGallery = async (): Promise<GalleryItem[]> => content.gallery
 
 export const fetchLinks = async (): Promise<FriendLink[]> => content.links

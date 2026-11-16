@@ -92,6 +92,7 @@ for (const post of content.posts) {
 
 const staticRoutes = [
   ['/notes', '说说'],
+  ['/gallery', '图库'],
   ['/archive', '归档'],
   ['/categories', '分类'],
   ['/tags', '标签'],

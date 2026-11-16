@@ -1,35 +1,80 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { useSite } from '@/composables/useSite'
 import { useTheme } from '@/composables/useTheme'
+import { usePanels } from '@/composables/usePanels'
+import { useSite } from '@/composables/useSite'
 
 const route = useRoute()
-const { siteInfo } = useSite()
 const { theme, toggle } = useTheme()
-
-const isLight = computed(() => theme.value === 'light')
-const themeLabel = computed(() =>
-  isLight.value ? '切换到夜间模式' : '切换到日间模式',
-)
-
-const scrolled = ref(false)
-const mobileOpen = ref(false)
+const { appearanceOpen, toggleAppearance } = usePanels()
+const { siteInfo } = useSite()
 
 const navs = [
-  { name: 'home', label: '首页', to: '/' },
-  { name: 'notes', label: '说说', to: '/notes' },
-  { name: 'archive', label: '归档', to: '/archive' },
-  { name: 'categories', label: '分类', to: '/categories' },
-  { name: 'links', label: '友链', to: '/links' },
-  { name: 'about', label: '关于', to: '/about' },
+  { name: 'home', cn: '首页', en: 'HOME', to: '/' },
+  { name: 'notes', cn: '说说', en: 'LOG', to: '/notes' },
+  { name: 'gallery', cn: '图库', en: 'STILLS', to: '/gallery' },
+  { name: 'archive', cn: '归档', en: 'ARCHIVE', to: '/archive' },
+  { name: 'categories', cn: '分类', en: 'SECTIONS', to: '/categories' },
+  { name: 'about', cn: '关于', en: 'ABOUT', to: '/about' },
 ]
 
-const siteName = computed(() => siteInfo.value?.site.name || 'chibarie')
+const menuNavs = [
+  navs[0],
+  navs[1],
+  navs[2],
+  navs[3],
+  navs[4],
+  { name: 'tags', cn: '标签', en: 'TAGS', to: '/tags' },
+  { name: 'links', cn: '友链', en: 'LINKS', to: '/links' },
+  navs[5],
+]
+
+const menuSummary = computed(() => {
+  const stats = siteInfo.value?.stats
+  return stats ? `${stats.postCount} 篇文章 · ${stats.galleryCount} 张图版` : ''
+})
+const isPaper = computed(() => theme.value === 'paper')
+const themeLabel = computed(() => (isPaper.value ? '切换到夜航主题' : '切换到纸白主题'))
+const solid = computed(() => route.name !== 'home' || scrolled.value)
+
+const scrolled = ref(false)
+const menuOpen = ref(false)
+const menuRef = ref<HTMLDialogElement | null>(null)
+const menuButton = ref<HTMLButtonElement | null>(null)
 
 function handleScroll() {
-  scrolled.value = window.scrollY > 20
+  scrolled.value = window.scrollY > 16
 }
+
+function openMenu() {
+  const dialog = menuRef.value
+  if (!dialog || dialog.open) return
+  dialog.showModal()
+  menuOpen.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+function closeMenu() {
+  menuRef.value?.close()
+}
+
+function handleMenuClose() {
+  menuOpen.value = false
+  document.body.style.overflow = ''
+  menuButton.value?.focus({ preventScroll: true })
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (menuRef.value?.open) closeMenu()
+  },
+)
+
+watch(menuOpen, (open) => {
+  if (!open && document.body.style.overflow === 'hidden') document.body.style.overflow = ''
+})
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
@@ -38,222 +83,134 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  if (menuRef.value?.open) menuRef.value.close()
+  document.body.style.overflow = ''
 })
 </script>
 
 <template>
-  <header
-    class="sticky top-0 z-50 transition-all duration-300"
-    :class="
-      scrolled
-        ? 'border-b border-mist-400/10 bg-night-950/78 backdrop-blur-xl'
-        : 'border-b border-transparent bg-gradient-to-b from-night-950/42 to-transparent'
-    "
-  >
-    <div
-      class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6"
-    >
-        <RouterLink to="/" class="group flex items-center gap-2.5">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          class="transition-transform duration-500 group-hover:rotate-90"
-        >
-          <defs>
-            <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" style="stop-color: rgb(var(--c-sakura-200))" />
-              <stop offset="100%" style="stop-color: rgb(var(--c-cosmos-400))" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M12 1.8 L14.55 9.15 L22 12 L14.55 14.85 L12 22.2 L9.45 14.85 L2 12 L9.45 9.15 Z"
-            fill="url(#logoGrad)"
-          />
+  <header class="cmd-bar" :data-solid="solid ? 'true' : 'false'">
+    <div class="cmd-bar__scrim" aria-hidden="true" />
+    <div class="cmd-bar__inner shell">
+      <RouterLink to="/" class="cmd-brand" aria-label="chibarie 首页">
+        <svg class="cmd-brand__mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <path d="M3 8.5V3h5.5M15.5 3H21v5.5M21 15.5V21h-5.5M8.5 21H3v-5.5" />
+          <rect x="9.2" y="9.2" width="5.6" height="5.6" fill="currentColor" stroke="none" />
         </svg>
-        <span class="text-base font-medium tracking-wide text-mist-100">
-          {{ siteName }}
+        <span class="cmd-brand__text">
+          <span class="cmd-brand__name">chibarie</span>
+          <span class="cmd-brand__sub">Archive</span>
         </span>
       </RouterLink>
 
-      <nav class="hidden items-center gap-1 md:flex">
+      <nav class="cmd-nav" aria-label="主导航">
         <RouterLink
           v-for="item in navs"
           :key="item.name"
           :to="item.to"
-          class="nav-link"
-          :class="{ 'nav-link-active': route.name === item.name }"
+          class="cmd-nav__link"
+          :aria-current="route.name === item.name ? 'page' : undefined"
         >
-          {{ item.label }}
+          <span class="cmd-nav__en" aria-hidden="true">{{ item.en }}</span>
+          <span class="cmd-nav__cn">{{ item.cn }}</span>
         </RouterLink>
       </nav>
 
-      <div class="flex items-center gap-1.5">
-        <RouterLink
-          to="/search"
-          class="flex h-9 w-9 items-center justify-center rounded-lg text-mist-400 transition-colors hover:bg-sakura-500/12 hover:text-sakura-200"
-          aria-label="搜索"
-        >
-          <svg
-            width="17"
-            height="17"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
+      <div class="cmd-tools">
+        <RouterLink to="/search" class="cmd-tool" aria-label="搜索" title="搜索">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
-            <path d="M20 20 L16.65 16.65" />
+            <path d="M20 20l-3.5-3.5" />
           </svg>
         </RouterLink>
 
         <button
           type="button"
-          class="theme-toggle flex h-9 w-9 items-center justify-center rounded-lg text-mist-400 transition-colors hover:bg-sakura-500/12 hover:text-sakura-200"
+          class="cmd-tool"
           :aria-label="themeLabel"
           :title="themeLabel"
-          :aria-pressed="isLight"
+          :aria-pressed="isPaper"
           @click="toggle"
         >
-          <span class="theme-icon" :class="{ 'is-light': isLight }">
-            <!-- 月亮：夜间模式当前状态 -->
-            <svg
-              class="theme-icon-moon"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            <!-- 太阳：日间模式当前状态 -->
-            <svg
-              class="theme-icon-sun"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="4.2" />
-              <path
-                d="M12 2.4v2.2M12 19.4v2.2M4.6 4.6l1.56 1.56M17.84 17.84l1.56 1.56M2.4 12h2.2M19.4 12h2.2M6.16 17.84L4.6 19.4M19.4 4.6l-1.56 1.56"
-              />
-            </svg>
-          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.4" />
+            <path d="M12 3.6a8.4 8.4 0 0 1 0 16.8z" fill="currentColor" stroke="none" />
+          </svg>
         </button>
 
         <button
-          class="flex h-9 w-9 items-center justify-center rounded-lg text-mist-400 transition-colors hover:bg-sakura-500/12 hover:text-sakura-200 md:hidden"
-          :aria-label="mobileOpen ? '收起菜单' : '展开菜单'"
-          @click="mobileOpen = !mobileOpen"
+          type="button"
+          class="cmd-tool"
+          :aria-label="appearanceOpen ? '关闭外观设置' : '打开外观设置'"
+          aria-controls="appearance-panel"
+          :aria-expanded="appearanceOpen"
+          title="外观设置"
+          @click="toggleAppearance"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <template v-if="mobileOpen">
-              <path d="M6 6 L18 18" />
-              <path d="M18 6 L6 18" />
-            </template>
-            <template v-else>
-              <path d="M4 7 H20" />
-              <path d="M4 12 H20" />
-              <path d="M4 17 H20" />
-            </template>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h7m5 0h4M4 17h3m5 0h8" />
+            <rect x="12.4" y="4.6" width="4.2" height="4.8" />
+            <rect x="7.4" y="14.6" width="4.2" height="4.8" />
+          </svg>
+        </button>
+
+        <button
+          ref="menuButton"
+          type="button"
+          class="cmd-tool cmd-tool--menu"
+          :aria-label="menuOpen ? '关闭菜单' : '打开菜单'"
+          aria-controls="site-menu"
+          :aria-expanded="menuOpen"
+          @click="openMenu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
       </div>
     </div>
-
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 -translate-y-1"
-      leave-active-class="transition duration-150 ease-in"
-      leave-to-class="opacity-0 -translate-y-1"
-    >
-      <nav
-        v-if="mobileOpen"
-        class="border-t border-mist-400/10 bg-night-950/95 backdrop-blur-xl md:hidden"
-      >
-        <div class="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
-          <RouterLink
-            v-for="item in navs"
-            :key="item.name"
-            :to="item.to"
-            class="nav-link"
-            :class="{ 'nav-link-active': route.name === item.name }"
-            @click="mobileOpen = false"
-          >
-            {{ item.label }}
-          </RouterLink>
-        </div>
-      </nav>
-    </Transition>
   </header>
+
+  <dialog
+    id="site-menu"
+    ref="menuRef"
+    class="menu-sheet"
+    aria-label="站点导航"
+    @close="handleMenuClose"
+  >
+    <div class="menu-sheet__bar">
+      <span class="cmd-brand" aria-hidden="true">
+        <span class="cmd-brand__text">
+          <span class="cmd-brand__name">chibarie</span>
+          <span class="cmd-brand__sub">Archive</span>
+        </span>
+      </span>
+      <button type="button" class="cmd-tool" aria-label="关闭菜单" autofocus @click="closeMenu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+          <path d="m6 6 12 12M6 18 18 6" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="menu-sheet__body" aria-label="站点导航">
+      <RouterLink
+        v-for="(item, index) in menuNavs"
+        :key="item.name"
+        :to="item.to"
+        class="menu-sheet__item"
+        :style="{ '--i': index }"
+        :aria-current="route.name === item.name ? 'page' : undefined"
+        @click="closeMenu"
+      >
+        <span class="menu-sheet__no" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span>
+        <span class="menu-sheet__cn">{{ item.cn }}</span>
+        <span class="menu-sheet__en" aria-hidden="true">{{ item.en }}</span>
+      </RouterLink>
+    </nav>
+
+    <div class="menu-sheet__foot">
+      <span>chibarie · 个人档案<template v-if="menuSummary"> · {{ menuSummary }}</template></span>
+      <span>{{ new Date().getFullYear() }}</span>
+    </div>
+  </dialog>
 </template>
-
-<style scoped>
-/* 日/夜图标：外层整体旋转 90°，内部两个图标交叉淡入淡出 */
-.theme-icon {
-  position: relative;
-  display: block;
-  height: 17px;
-  width: 17px;
-  transition: transform 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
-}
-
-.theme-icon.is-light {
-  transform: rotate(90deg);
-}
-
-.theme-icon svg {
-  position: absolute;
-  inset: 0;
-  transition:
-    opacity 0.28s ease,
-    transform 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
-}
-
-.theme-icon-moon {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
-
-.theme-icon-sun {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.4);
-}
-
-.theme-icon.is-light .theme-icon-moon {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.4);
-}
-
-.theme-icon.is-light .theme-icon-sun {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .theme-icon,
-  .theme-icon svg {
-    transition: opacity 0.2s ease;
-    transform: none !important;
-  }
-}
-</style>
