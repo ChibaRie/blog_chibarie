@@ -674,11 +674,13 @@
   to { opacity: 1; transform: none; }
 }
 
-/* 换页快门 */
-.shutter-leave-active { transition: clip-path 180ms var(--ease-mech); }
+/* 换页快门：两端都写成显式形状，clip-path 才能从 0 插值到 0 */
+.shutter-leave-active { transition: clip-path 150ms var(--ease-mech); }
+.shutter-leave-from { clip-path: inset(0 0 0 0); }
 .shutter-leave-to { clip-path: inset(0 0 100% 0); }
-.shutter-enter-active { transition: clip-path 320ms var(--ease-mech); }
+.shutter-enter-active { transition: clip-path 240ms var(--ease-mech); }
 .shutter-enter-from { clip-path: inset(100% 0 0 0); }
+.shutter-enter-to { clip-path: inset(0 0 0 0); }
 @media (prefers-reduced-motion: reduce) {
   .shutter-leave-active,
   .shutter-enter-active { transition: none; }

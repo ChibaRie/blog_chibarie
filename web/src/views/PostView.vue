@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { fetchArchive, fetchPost, likePost, type ArchiveItem, type Post, type TocItem } from '@/api'
 import { useSite } from '@/composables/useSite'
@@ -20,6 +20,7 @@ const liked = ref(false)
 const activeHeading = ref('')
 const progress = ref(0)
 const articleRef = ref<HTMLElement | null>(null)
+const mobileToc = ref<HTMLDetailsElement | null>(null)
 
 const LIKE_KEY = 'chibarie-liked-posts'
 const DEFAULT_DESCRIPTION = 'chibarie 的个人档案 —— 技术笔记、生活记录与喜欢的画'
@@ -152,16 +153,38 @@ watch(
     await load(String(next))
   },
 )
+
+// 目录本身可能比视口高：滚动文章时把当前项滚进目录自己的滚动区。
+watch(activeHeading, (id) => {
+  if (!id) return
+  const list = document.querySelector<HTMLElement>('.toc .toc__list')
+  const link = document.querySelector<HTMLAnchorElement>(`.toc .toc__link[href="#${id}"]`)
+  if (!list || !link || list.clientHeight === 0) return
+  const listRect = list.getBoundingClientRect()
+  const linkRect = link.getBoundingClientRect()
+  if (linkRect.top < listRect.top) list.scrollTop += linkRect.top - listRect.top
+  else if (linkRect.bottom > listRect.bottom) list.scrollTop += linkRect.bottom - listRect.bottom
+})
+
+// 移动端目录是折叠面板：先收起，等布局稳定后再滚到标题。
+function jumpToHeading(event: MouseEvent, id: string) {
+  event.preventDefault()
+  if (mobileToc.value) mobileToc.value.open = false
+  void nextTick(() => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    history.replaceState(null, '', `#${id}`)
+  })
+}
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="read-progress" aria-hidden="true">
-      <i :style="{ transform: `scaleX(${progress})` }" />
-    </div>
-  </Teleport>
-
   <div class="shell">
+    <Teleport to="body">
+      <div class="read-progress" aria-hidden="true">
+        <i :style="{ transform: `scaleX(${progress})` }" />
+      </div>
+    </Teleport>
+
     <div v-if="loading" class="article-layout" aria-hidden="true">
       <div class="article-main">
         <div class="skeleton skeleton--line mt-10" style="width: 180px" />
@@ -210,10 +233,15 @@ watch(
           </div>
         </figure>
 
-        <details v-if="toc.length" class="toc-mobile">
+        <details v-if="toc.length" ref="mobileToc" class="toc-mobile">
           <summary>
             <span>目录 / Contents</span>
-            <span>{{ toc.length }} 节</span>
+            <span class="toc-mobile__meta">
+              {{ toc.length }} 节
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
           </summary>
           <nav class="toc__list" aria-label="文章目录">
             <a
@@ -222,6 +250,8 @@ watch(
               :href="`#${item.id}`"
               class="toc__link"
               :class="{ 'toc__link--sub': item.level === 3 }"
+              :aria-current="activeHeading === item.id ? 'location' : undefined"
+              @click="jumpToHeading($event, item.id)"
             >
               <i aria-hidden="true">{{ index + 1 }}</i>
               <span>{{ item.text }}</span>
