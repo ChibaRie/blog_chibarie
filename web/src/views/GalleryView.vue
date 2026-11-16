@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchGallery, type GalleryItem, type GalleryOrientation } from '@/api'
 import ArtPlate from '@/components/ArtPlate.vue'
@@ -31,6 +31,61 @@ const pose = computed<Pose>(() => {
 const visible = computed(() =>
   pose.value === 'all' ? items.value : items.value.filter((item) => item.orientation === pose.value),
 )
+
+const gridEl = ref<HTMLElement | null>(null)
+const gridWidth = ref(0)
+let gridObserver: ResizeObserver | null = null
+
+interface GalleryRow {
+  height: number
+  items: GalleryItem[]
+}
+
+function targetRowHeight(width: number): number {
+  if (width < 500) return 128
+  if (width < 900) return 170
+  return 216
+}
+
+/**
+ * 把图版排成每行等高、宽度按真实比例铺满的版式。
+ * 行高只由该行的比例和决定，所以图片不会被裁切；最后一行保持目标高度。
+ */
+function packRows(list: GalleryItem[], width: number, target: number): GalleryRow[] {
+  if (!width || list.length === 0) return []
+  const rows: GalleryRow[] = []
+  let row: GalleryItem[] = []
+  let ratioSum = 0
+  const flush = (isLast: boolean) => {
+    if (!row.length) return
+    const scaled = (width - row.length) / ratioSum
+    rows.push({
+      height: isLast ? Math.min(target, scaled) : Math.max(target * 0.8, scaled),
+      items: row,
+    })
+    row = []
+    ratioSum = 0
+  }
+  for (const item of list) {
+    const ratio = item.width / item.height
+    if (row.length) {
+      const heightIfAdded = (width - (row.length + 1)) / (ratioSum + ratio)
+      if (heightIfAdded < target * 0.8) flush(false)
+    }
+    row.push(item)
+    ratioSum += ratio
+  }
+  flush(true)
+  return rows
+}
+
+const rows = computed(() =>
+  packRows(visible.value, gridWidth.value, targetRowHeight(gridWidth.value)),
+)
+
+function measureGrid() {
+  if (gridEl.value) gridWidth.value = gridEl.value.clientWidth
+}
 
 const filters: { value: Pose; cn: string; en: string }[] = [
   { value: 'all', cn: '全部', en: 'All' },
@@ -94,7 +149,18 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  void load()
+  measureGrid()
+  if (gridEl.value) {
+    gridObserver = new ResizeObserver(measureGrid)
+    gridObserver.observe(gridEl.value)
+  }
+})
+
+onUnmounted(() => {
+  gridObserver?.disconnect()
+})
 </script>
 
 <template>
@@ -136,41 +202,51 @@ onMounted(load)
       <p class="sr-only" aria-live="polite">当前显示 {{ visible.length }} 张图版</p>
     </div>
 
-    <div v-if="loading" class="stills-grid" aria-hidden="true">
-      <div v-for="i in 12" :key="i" class="stills-grid__cell">
-        <div class="stills-grid__img skeleton" />
-        <div class="stills-grid__meta">
-          <span class="skeleton skeleton--line" style="width: 48px" />
+    <div ref="gridEl" class="stills-grid-wrap">
+      <div v-if="loading" class="stills-grid stills-grid--loading" aria-hidden="true">
+        <div v-for="i in 12" :key="i" class="stills-grid__cell">
+          <div class="stills-grid__img skeleton" />
+          <div class="stills-grid__meta">
+            <span class="skeleton skeleton--line" style="width: 48px" />
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-else-if="error" class="arc-empty mt-6">
-      <span class="arc-empty__en">// Offline</span>
-      <p>{{ error }}。请刷新页面重试。</p>
-      <button type="button" class="arc-btn mt-2" @click="load">重新载入</button>
-    </div>
+      <div v-else-if="error" class="arc-empty mt-6">
+        <span class="arc-empty__en">// Offline</span>
+        <p>{{ error }}。请刷新页面重试。</p>
+        <button type="button" class="arc-btn mt-2" @click="load">重新载入</button>
+      </div>
 
-    <div v-else-if="visible.length === 0" class="arc-empty mt-6">
-      <span class="arc-empty__en">// Empty</span>
-      <p>这个构图下还没有图版。切换筛选，或把图片整理进图库后再构建。</p>
-    </div>
+      <div v-else-if="visible.length === 0" class="arc-empty mt-6">
+        <span class="arc-empty__en">// Empty</span>
+        <p>这个构图下还没有图版。切换筛选，或把图片整理进图库后再构建。</p>
+      </div>
 
-    <div v-else class="stills-grid">
-      <button
-        v-for="item in visible"
-        :key="item.no"
-        type="button"
-        class="stills-grid__cell"
-        :aria-label="`查看${plateAlt(item)}`"
-        @click="openPlate(item)"
-      >
-        <ArtPlate :item="item" ratio="4 / 3" :show-meta="false" />
-        <span class="stills-grid__meta">
-          <span class="stills-grid__no">No.{{ formatIndex(item.no, 3) }}</span>
-          <span class="stills-grid__res">{{ item.width }} × {{ item.height }}</span>
-        </span>
-      </button>
+      <div v-else class="stills-grid">
+        <div
+          v-for="(row, rowIndex) in rows"
+          :key="rowIndex"
+          class="stills-grid__row"
+          :style="{ '--row-h': `${row.height}px` }"
+        >
+          <button
+            v-for="item in row.items"
+            :key="item.no"
+            type="button"
+            class="stills-grid__cell"
+            :style="{ '--ratio': item.width / item.height }"
+            :aria-label="`查看${plateAlt(item)}`"
+            @click="openPlate(item)"
+          >
+            <ArtPlate :item="item" :show-meta="false" />
+            <span class="stills-grid__meta">
+              <span class="stills-grid__no">No.{{ formatIndex(item.no, 3) }}</span>
+              <span v-if="item.width / item.height >= 0.8" class="stills-grid__res">{{ item.width }} × {{ item.height }}</span>
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <p class="stills-note">

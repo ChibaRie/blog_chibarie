@@ -55,7 +55,11 @@ function openImage(index: number) {
         </svg>
       </button>
 
-      <div v-if="visibleImages.length" class="logrow__images">
+      <div
+        v-if="visibleImages.length"
+        class="logrow__images"
+        :class="{ 'logrow__images--single': visibleImages.length === 1 }"
+      >
         <button
           v-for="(image, index) in visibleImages"
           :key="image"

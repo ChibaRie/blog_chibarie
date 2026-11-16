@@ -216,18 +216,37 @@
 .logrow__toggle svg { width: 12px; height: 12px; transition: transform var(--t-base) var(--ease-mech); }
 .logrow__toggle[aria-expanded='true'] svg { transform: rotate(180deg); }
 .logrow__images {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 5px;
   max-width: 560px;
 }
 .logrow__images button {
+  flex: 0 0 auto;
   padding: 0;
   border: 0;
   background: none;
   cursor: zoom-in;
 }
-.logrow__images .arc-plateimg { aspect-ratio: 1; }
+.logrow__images .arc-plateimg {
+  display: inline-block;
+  height: 168px;
+  max-width: 100%;
+}
+.logrow__images .arc-plateimg img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+}
+.logrow__images--single .arc-plateimg { height: auto; }
+.logrow__images--single .arc-plateimg img {
+  height: auto;
+  max-height: 360px;
+  width: auto;
+  max-width: 100%;
+}
 .logrow__more {
   position: absolute;
   right: 6px;

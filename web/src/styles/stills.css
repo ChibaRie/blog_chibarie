@@ -81,27 +81,44 @@
   text-transform: uppercase;
   color: rgb(var(--c-ink3));
 }
-.stills-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  background: rgb(var(--c-line) / 0.16);
+.stills-grid-wrap { width: 100%; }
+.stills-grid__row {
+  display: flex;
+  overflow: hidden;
+  background: rgb(var(--c-paper));
   border-bottom: 1px solid rgb(var(--c-line) / 0.16);
 }
 .stills-grid__cell {
   display: grid;
+  flex: 0 0 auto;
+  width: calc(var(--ratio, 1) * var(--row-h, 216px) + 1px);
   gap: 0;
   padding: 0;
   border: 0;
+  border-right: 1px solid rgb(var(--c-line) / 0.16);
   background: rgb(var(--c-paper));
   color: inherit;
   cursor: pointer;
   text-align: left;
 }
 .stills-grid__cell:focus-visible { outline-offset: -4px; }
-.stills-grid__img { aspect-ratio: 4 / 3; position: relative; overflow: hidden; background: var(--avg, rgb(var(--c-plate2))); }
-.stills-grid__img img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms var(--ease-ease); }
-.stills-grid__cell:hover .stills-grid__img img { transform: scale(1.025); }
+.stills-grid__cell .arc-plateimg { width: 100%; height: var(--row-h); }
+.stills-grid__cell .arc-plateimg img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms var(--ease-ease); }
+.stills-grid__cell:hover .arc-plateimg img { transform: scale(1.025); }
+.stills-grid__img { height: var(--row-h); position: relative; overflow: hidden; background: var(--avg, rgb(var(--c-plate2))); }
+.stills-grid--loading {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.stills-grid--loading .stills-grid__cell {
+  width: auto;
+  border-bottom: 1px solid rgb(var(--c-line) / 0.16);
+}
+.stills-grid--loading .stills-grid__img { height: 200px; }
+@media (max-width: 680px) {
+  .stills-grid--loading { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stills-grid--loading .stills-grid__img { height: 130px; }
+}
 .stills-grid__meta {
   display: flex;
   align-items: center;
@@ -116,11 +133,7 @@
 .stills-grid__no { font-size: 11px; font-weight: 600; color: rgb(var(--c-ink2)); }
 .stills-grid__res { font-size: 9.5px; color: rgb(var(--c-ink3)); }
 .stills-grid__cell:hover .stills-grid__no { color: rgb(var(--c-accent-text)); }
-@media (max-width: 1000px) {
-  .stills-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 @media (max-width: 680px) {
-  .stills-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stills-grid__res { display: none; }
 }
 .stills-note {
