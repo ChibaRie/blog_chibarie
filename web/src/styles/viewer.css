@@ -90,7 +90,7 @@
   transition: background-color var(--t-fast) var(--ease-ease), color var(--t-fast) var(--ease-ease);
 }
 .image-viewer__btn:hover:not(:disabled),
-.image-viewer__btn:focus-visible:not(:disabled) { background: #ff6fa5; color: #0c0c0e; border-color: transparent; }
+.image-viewer__btn:focus-visible:not(:disabled) { background: rgb(var(--c-accent)); color: rgb(var(--c-accent-ink)); border-color: transparent; }
 .image-viewer__btn:disabled { opacity: 0.28; cursor: default; }
 .image-viewer__btn svg { width: 20px; height: 20px; }
 .image-viewer__btn--prev { left: clamp(10px, 2vw, 24px); }
@@ -117,7 +117,7 @@
   text-transform: uppercase;
   cursor: pointer;
 }
-.image-viewer__status button:hover { background: #ff6fa5; color: #0c0c0e; }
+.image-viewer__status button:hover { background: rgb(var(--c-accent)); color: rgb(var(--c-accent-ink)); }
 
 .image-viewer__foot {
   display: flex;
@@ -135,7 +135,7 @@
 }
 .image-viewer__foot span b { color: rgb(242 240 235 / 0.78); font-weight: 500; }
 .image-viewer__hint { color: rgb(242 240 235 / 0.36); }
-.image-viewer :focus-visible { outline: 2px solid #ff6fa5; outline-offset: 3px; }
+.image-viewer :focus-visible { outline: 2px solid rgb(var(--c-accent)); outline-offset: 3px; }
 
 .image-viewer[open] .image-viewer__bar { animation: viewer-bar 200ms var(--ease-mech) backwards; }
 .image-viewer[open] .image-viewer__img { animation: viewer-img 320ms var(--ease-snap) backwards; }
