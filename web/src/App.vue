@@ -4,6 +4,7 @@ import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import AppearancePanel from '@/components/AppearancePanel.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
+import RouteCurtain from '@/components/RouteCurtain.vue'
 
 const route = useRoute()
 </script>
@@ -24,4 +25,5 @@ const route = useRoute()
   <SiteFooter />
   <AppearancePanel />
   <ImageViewer />
+  <RouteCurtain />
 </template>

@@ -12,6 +12,7 @@ import './styles/article-page.css'
 import './styles/pages.css'
 import './styles/article.css'
 import './styles/viewer.css'
+import './styles/route.css'
 import './styles/appearance.css'
 
 initTheme()

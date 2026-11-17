@@ -1,0 +1,166 @@
+/* ==========================================================================
+   路由幕布：斜切命令面扫入 / 扫出，HUD 只报目标栏目
+   ========================================================================== */
+
+.route-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 340;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.route-curtain__band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--i) * 19% - 5%);
+  width: 30%;
+  background: linear-gradient(90deg, #09090b, #101014 62%, #0b0b0f);
+  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0 100%);
+  transform: translate3d(-140vw, 0, 0);
+  filter: drop-shadow(2px 0 0 rgb(var(--c-accent) / 0.5));
+  will-change: transform;
+}
+.route-curtain__band:nth-child(even) {
+  background: linear-gradient(90deg, #0b0b0f, #141419 58%, #0d0d11);
+}
+
+.route-curtain[data-phase='out'] .route-curtain__band {
+  transform: translate3d(0, 0, 0);
+  transition: transform 220ms var(--ease-mech) calc(var(--i) * 20ms);
+}
+.route-curtain[data-phase='in'] .route-curtain__band {
+  transform: translate3d(140vw, 0, 0);
+  transition: transform 260ms var(--ease-mech) calc(var(--i) * 14ms);
+}
+.route-curtain[data-phase='idle'] .route-curtain__band {
+  transition: none;
+  transform: translate3d(-140vw, 0, 0);
+}
+
+.route-curtain__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--c-accent) / 0.85) 18%, rgb(255 255 255 / 0.55) 52%, transparent 86%);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.route-curtain[data-phase='out'] .route-curtain__scan {
+  opacity: 1;
+  transform: scaleX(1);
+  transition: transform 300ms var(--ease-mech) 30ms, opacity 120ms var(--ease-ease) 30ms;
+}
+.route-curtain[data-phase='in'] .route-curtain__scan {
+  opacity: 0;
+  transform: scaleX(1);
+  transition: opacity 160ms var(--ease-ease);
+}
+.route-curtain[data-phase='idle'] .route-curtain__scan {
+  transition: none;
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.route-curtain__hud {
+  position: absolute;
+  left: clamp(24px, 8vw, 128px);
+  top: 50%;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  translate: 0 -50%;
+  opacity: 0;
+  transform: translateX(-14px);
+}
+.route-curtain__code {
+  padding-left: 10px;
+  border-left: 2px solid rgb(var(--c-accent));
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.24em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  color: rgb(var(--c-accent));
+}
+.route-curtain__en {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-size: clamp(38px, 8.4vw, 112px);
+  font-weight: 800;
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #f2f0eb;
+  max-width: 78vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.route-curtain__cn {
+  font-size: clamp(13px, 1.4vw, 18px);
+  font-weight: 500;
+  letter-spacing: 0.56em;
+  color: rgb(242 240 235 / 0.62);
+}
+.route-curtain__track {
+  position: relative;
+  display: block;
+  width: clamp(180px, 28vw, 340px);
+  height: 2px;
+  margin-top: 10px;
+  background: rgb(255 255 255 / 0.18);
+  overflow: hidden;
+}
+.route-curtain__track i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgb(var(--c-accent));
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.route-curtain[data-phase='out'] .route-curtain__hud {
+  opacity: 1;
+  transform: none;
+  transition: opacity 180ms var(--ease-ease) 90ms, transform 240ms var(--ease-snap) 90ms;
+}
+.route-curtain[data-phase='out'] .route-curtain__track i {
+  transform: scaleX(1);
+  transition: transform 360ms var(--ease-mech) 60ms;
+}
+.route-curtain[data-phase='in'] .route-curtain__hud {
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 160ms var(--ease-ease), transform 200ms var(--ease-mech);
+}
+.route-curtain[data-phase='in'] .route-curtain__track i {
+  transform: scaleX(1);
+  transition: none;
+}
+.route-curtain[data-phase='idle'] .route-curtain__hud {
+  transition: none;
+  opacity: 0;
+  transform: translateX(-14px);
+}
+.route-curtain[data-phase='idle'] .route-curtain__track i {
+  transition: none;
+  transform: scaleX(0);
+}
+
+@media (max-width: 640px) {
+  .route-curtain__hud { left: 22px; }
+  .route-curtain__en { font-size: clamp(34px, 15vw, 76px); }
+  .route-curtain__cn { letter-spacing: 0.4em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-curtain { display: none; }
+}

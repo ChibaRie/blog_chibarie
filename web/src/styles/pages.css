@@ -4,17 +4,40 @@
 
 /* ---------- 页面头（内页：安静） ---------- */
 .page-head {
+  position: relative;
   display: grid;
   gap: 12px;
   padding-block: clamp(30px, 5vw, 58px) clamp(22px, 3vw, 34px);
+  padding-left: clamp(14px, 2.2vw, 28px);
+  border-left: 1px solid rgb(var(--c-line) / 0.16);
+}
+.page-head::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 3px;
+  height: clamp(42px, 7vw, 72px);
+  background: rgb(var(--c-accent));
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
 }
 .page-head__en {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgb(var(--c-accent-text));
+}
+.page-head__en::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: rgb(var(--c-accent-text));
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
 }
 .page-head__title {
   font-size: clamp(34px, 4.6vw, 58px);

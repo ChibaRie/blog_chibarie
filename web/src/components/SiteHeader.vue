@@ -4,11 +4,13 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { usePanels } from '@/composables/usePanels'
 import { useSite } from '@/composables/useSite'
+import { withBase } from '@/utils/asset'
 
 const route = useRoute()
 const { theme, toggle } = useTheme()
 const { appearanceOpen, toggleAppearance } = usePanels()
 const { siteInfo } = useSite()
+const logoSrc = withBase('/brand/chibarie-64.png')
 
 const navs = [
   { name: 'home', cn: '首页', en: 'HOME', to: '/' },
@@ -93,10 +95,9 @@ onUnmounted(() => {
     <div class="cmd-bar__scrim" aria-hidden="true" />
     <div class="cmd-bar__inner shell">
       <RouterLink to="/" class="cmd-brand" aria-label="chibarie 首页">
-        <svg class="cmd-brand__mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-          <path d="M3 8.5V3h5.5M15.5 3H21v5.5M21 15.5V21h-5.5M8.5 21H3v-5.5" />
-          <rect x="9.2" y="9.2" width="5.6" height="5.6" fill="currentColor" stroke="none" />
-        </svg>
+        <span class="cmd-brand__mark" aria-hidden="true">
+          <img :src="logoSrc" alt="" width="64" height="64" decoding="async">
+        </span>
         <span class="cmd-brand__text">
           <span class="cmd-brand__name">chibarie</span>
           <span class="cmd-brand__sub">Archive</span>
@@ -105,13 +106,13 @@ onUnmounted(() => {
 
       <nav class="cmd-nav" aria-label="主导航">
         <RouterLink
-          v-for="item in navs"
+          v-for="(item, index) in navs"
           :key="item.name"
           :to="item.to"
           class="cmd-nav__link"
           :aria-current="route.name === item.name ? 'page' : undefined"
         >
-          <span class="cmd-nav__en" aria-hidden="true">{{ item.en }}</span>
+          <span class="cmd-nav__en" aria-hidden="true"><b>{{ String(index + 1).padStart(2, '0') }}</b>{{ item.en }}</span>
           <span class="cmd-nav__cn">{{ item.cn }}</span>
         </RouterLink>
       </nav>
@@ -180,6 +181,9 @@ onUnmounted(() => {
   >
     <div class="menu-sheet__bar">
       <span class="cmd-brand" aria-hidden="true">
+        <span class="cmd-brand__mark">
+          <img :src="logoSrc" alt="" width="64" height="64" decoding="async">
+        </span>
         <span class="cmd-brand__text">
           <span class="cmd-brand__name">chibarie</span>
           <span class="cmd-brand__sub">Archive</span>

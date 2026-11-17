@@ -13,7 +13,7 @@ import {
 } from '@/api'
 import ArtPlate from '@/components/ArtPlate.vue'
 import CategoryDial from '@/components/CategoryDial.vue'
-import HeroDust from '@/components/HeroDust.vue'
+import HeroField from '@/components/HeroField.vue'
 import NoteCard from '@/components/NoteCard.vue'
 import RecordRow from '@/components/RecordRow.vue'
 import SettleNumber from '@/components/SettleNumber.vue'
@@ -196,7 +196,7 @@ async function load() {
   error.value = ''
   try {
     const [postPage, notePage, categoryList, tagList] = await Promise.all([
-      fetchPosts({ page: 1, pageSize: 6 }),
+      fetchPosts({ page: 1, pageSize: 12 }),
       fetchNotes({ page: 1, pageSize: 3 }),
       fetchCategories(),
       fetchTags(),
@@ -277,7 +277,7 @@ onUnmounted(() => {
         />
       </div>
       <div class="hero__veil" aria-hidden="true" />
-      <HeroDust />
+      <HeroField />
       <p class="sr-only" aria-live="polite">
         第 {{ heroIndex + 1 }} 张，共 {{ frames.length }} 张<template v-if="currentFrame?.no">，图版 No.{{ formatIndex(currentFrame.no, 3) }}</template>
       </p>
@@ -302,7 +302,6 @@ onUnmounted(() => {
             <span class="hero__word">chibarie</span>
             <span class="hero__word hero__word--hollow">Archive</span>
           </h1>
-          <p class="hero__cn">技术笔记 / 生活记录 / 喜欢的画</p>
           <div v-if="description" class="hero__quote">
             <span class="hero__quote-label">// Signature</span>
             <p>{{ description }}</p>

@@ -44,6 +44,7 @@
   pointer-events: none;
   opacity: 0.55;
 }
+.hero__dust--field { opacity: 0.82; }
 
 .hero__inner {
   position: relative;
@@ -102,12 +103,6 @@
   font-size: clamp(23px, 5.9vw, 84px);
   letter-spacing: 0.06em;
   margin-top: 0.14em;
-}
-.hero__cn {
-  margin-top: clamp(14px, 2.4vh, 24px);
-  font-size: clamp(12px, 1vw, 14px);
-  letter-spacing: 0.18em;
-  color: rgb(242 240 235 / 0.78);
 }
 .hero__quote {
   display: grid;
@@ -237,7 +232,6 @@
   html[data-motion='on'] .hero__word { animation: hero-drive 620ms var(--ease-mech) backwards; }
   html[data-motion='on'] .hero__word--hollow { animation-delay: 140ms; }
   html[data-motion='on'] .hero__meta { animation: arc-in 400ms var(--ease-snap) 120ms backwards; }
-  html[data-motion='on'] .hero__cn { animation: arc-in 420ms var(--ease-snap) 420ms backwards; }
   html[data-motion='on'] .hero__quote { animation: arc-in 420ms var(--ease-snap) 480ms backwards; }
   html[data-motion='on'] .hero__foot { animation: arc-in 440ms var(--ease-snap) 560ms backwards; }
   html[data-motion='on'] .hero__veil { animation: hero-veil 900ms var(--ease-ease) backwards; }
