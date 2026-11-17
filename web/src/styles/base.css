@@ -181,6 +181,24 @@
     white-space: nowrap;
     border: 0;
   }
+
+  /* 全站底图：固定层，图文内容在 z-index 1 之上 */
+  .site-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0.06;
+  }
+  html[data-theme='paper'] .site-canvas { opacity: 0.05; }
+
+  #main {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* ==========================================================================

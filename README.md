@@ -25,7 +25,7 @@ python web/scripts/gallery-build.py \
   --src "<本地收藏目录>" \
   --out web/public/gallery \
   --manifest content/gallery.json \
-  --hero 7,9,22,27,35,46
+  --hero 13,15,23,25,33,36,41,42,47,49,52,59,60
 ```
 
 先跑一次拿到编号，再用 `--hero` 指定要裁成 1920×1080 头图的图版。重复运行会保留 `content/gallery.json` 里已有的 `title` 与 `note`。

@@ -305,6 +305,8 @@
 
 /* ---------- 页脚：命令面 ---------- */
 .cmd-foot {
+  position: relative;
+  z-index: 1;
   margin-top: var(--space-section);
   background: rgb(var(--c-cmd));
   color: rgb(var(--c-cmd-ink));
